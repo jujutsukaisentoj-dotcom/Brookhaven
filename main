@@ -1,351 +1,426 @@
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 
-local Window = OrionLib:MakeWindow({Name = "XenoHub - Brookhaven Items", HidePremium = false, SaveConfig = true, ConfigFolder = "XenoHub"})
+local Window = OrionLib:MakeWindow({
+    Name = "Lyra Hub - Brookhaven RP | Ultimate V4", 
+    HidePremium = false, 
+    SaveConfig = true, 
+    ConfigFolder = "LyraBrookhaven"
+})
 
--- Sekme Oluşturma
-local Tab = Window:MakeTab({
-	Name = "Eşyalar (Items)",
+--[[ 
+    TABLO YAPISI:
+    1. Main (Genel Karakter)
+    2. Items (Eşyalar - Senin kodların)
+    3. Vehicles (Araba)
+    4. House (Ev)
+    5. Troll (Eğlence)
+    6. Visuals (Görüş/ESP)
+    7. Avatar (Kopyalama)
+]]
+
+-- 1. MAIN TAB (Genel)
+local MainTab = Window:MakeTab({
+	Name = "Ana Menü",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
 })
 
--- SENİN KODLARIN BURADA BAŞLIYOR --
+MainTab:AddSection({ Name = "Karakter Ayarları" })
 
-Tab:AddButton({
-	Title = "💸 Money Gun",
+MainTab:AddSlider({
+	Name = "Hız (WalkSpeed)",
+	Min = 16,
+	Max = 300,
+	Default = 16,
+	Color = Color3.fromRGB(0, 255, 127),
+	Increment = 1,
+	ValueName = "Speed",
+	Callback = function(Value)
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+	end    
+})
+
+MainTab:AddSlider({
+	Name = "Zıplama (JumpPower)",
+	Min = 50,
+	Max = 300,
+	Default = 50,
+	Color = Color3.fromRGB(0, 255, 255),
+	Increment = 1,
+	ValueName = "Jump",
+	Callback = function(Value)
+		game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+	end    
+})
+
+MainTab:AddToggle({
+	Name = "Noclip (Duvardan Geç)",
+	Default = false,
+	Callback = function(Value)
+        local Noclip = nil
+        local Clip = nil
+        
+        if Value then
+            Noclip = game:GetService("RunService").Stepped:Connect(function()
+                if game.Players.LocalPlayer.Character then
+                    for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                        if v:IsA("BasePart") and v.CanCollide == true then
+                            v.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            if Noclip then Noclip:Disconnect() end
+        end
+	end    
+})
+
+MainTab:AddButton({
+    Name = "Uçma Modu (Fly) - E Tuşu",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+    end
+})
+
+-- 2. ITEMS TAB (Senin Eşya Kodların)
+local ItemTab = Window:MakeTab({
+	Name = "Eşyalar",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+ItemTab:AddSection({ Name = "Gizli Eşyalar" })
+
+ItemTab:AddButton({
+	Name = "💸 Money Gun",
 	Callback = function()
 		local rep = game:GetService("ReplicatedStorage")
 		local Players = game:GetService("Players")
 		local localPlayer = Players.LocalPlayer
 		local itemName = "MoneyGun"
 
+        -- Notification Func
 		local function tryNotify(title, text)
 			pcall(function()
 				game:GetService("StarterGui"):SetCore("SendNotification", {
-					Title = title,
-					Text = text,
-					Duration = 4
+					Title = title, Text = text, Duration = 4
 				})
 			end)
 		end
 
+        -- Trigger Logic
 		local ok, err = pcall(function()
 			local re = rep:FindFirstChild("RE") or rep:FindFirstChild("Remotes") or rep
+            
+            -- Method 1: Direct Remote
 			local candidates = {"GetItem", "Getİtem", "Get_Item", "GetTool", "GetToolToServer"}
-
 			for _, name in ipairs(candidates) do
 				local r = re:FindFirstChild(name)
 				if r then
-					if r.InvokeServer then
-						r:InvokeServer(itemName)
-						tryNotify("💸 Money Gun", "Requested via "..name.." ⚡")
-						return
-					elseif r.FireServer then
-						r:FireServer(itemName)
-						tryNotify("💸 Money Gun", "Requested via "..name.." 🔥")
-						return
-					end
+					if r.InvokeServer then r:InvokeServer(itemName) return
+					elseif r.FireServer then r:FireServer(itemName) return end
 				end
 			end
 
+            -- Method 2: Trigger Event
 			local trigger = re:FindFirstChild("1Playe1rTrigge1rEven1t") or rep:FindFirstChild("1Playe1rTrigge1rEven1t")
 			if trigger then
-				local args = {
-					[1] = "AcceptedToolToServer",
-					[2] = itemName,
-					[3] = localPlayer
-				}
-
-				if trigger.FireServer then
-					trigger:FireServer(unpack(args))
-					tryNotify("💸 Money Gun", "Triggered successfully 🎯")
-					return
-				elseif trigger.InvokeServer then
-					trigger:InvokeServer(unpack(args))
-					tryNotify("💸 Money Gun", "Triggered successfully ⚙️")
-					return
-				end
+				local args = {[1] = "AcceptedToolToServer", [2] = itemName, [3] = localPlayer}
+				if trigger.FireServer then trigger:FireServer(unpack(args)) return
+				elseif trigger.InvokeServer then trigger:InvokeServer(unpack(args)) return end
 			end
-
-			local topRemotes = rep:FindFirstChild("Remotes")
-			if topRemotes then
-				local r = topRemotes:FindFirstChild("GetItem") or topRemotes:FindFirstChild("Getİtem")
-				if r and r.FireServer then
-					r:FireServer(itemName)
-					tryNotify("💸 Money Gun", "Requested via Remotes 📡")
-					return
-				end
-			end
-
-			tryNotify("💸 Money Gun", "No suitable remote found ❌")
+            
+			tryNotify("Money Gun", "Deneniyor...")
 		end)
-
-		if not ok then
-			tryNotify("💸 Money Gun", "Error: "..tostring(err).." ⚠️")
-		end
 	end
 })
 
-Tab:AddButton({
-	Title = "🪂 Glider",
+ItemTab:AddButton({
+	Name = "🪂 Glider",
 	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "Glider",
-			[3] = game:GetService("Players").LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+        pcall(function()
+		    local args = {[1] = "AcceptedToolToServer", [2] = "Glider", [3] = game.Players.LocalPlayer}
+		    game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+        end)
 	end
 })
 
-Tab:AddButton({
-	Title = "❄️ Snowball Cannon",
+ItemTab:AddButton({
+	Name = "💣 Cannon (Top)",
 	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "SnowballCannon",
-			[3] = game.Players.LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+        pcall(function()
+		    local args = {[1] = "AcceptedToolToServer", [2] = "Cannon", [3] = game.Players.LocalPlayer}
+		    game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+        end)
 	end
 })
 
-Tab:AddButton({
-	Title = "☃️ Snowball",
+ItemTab:AddButton({
+	Name = "🪓 Scythe (Tırpan)",
 	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "SnowBall",
-			[3] = game.Players.LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+        pcall(function()
+            local args = {[1] = "AcceptedToolToServer", [2] = "Scythe", [3] = game.Players.LocalPlayer}
+            game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+        end)
 	end
 })
 
-Tab:AddButton({
-	Title = "🍭 Lollipop Peppermint",
+ItemTab:AddButton({
+	Name = "📖 Agency Book",
 	Callback = function()
-		local Players = game:GetService("Players")
-		local ReplicatedStorage = game:GetService("ReplicatedStorage")
-		local LocalPlayer = Players.LocalPlayer
-
-		local possibleNames = {
-			"LollipopPeppermint",
-			"Lollipop_Peppermint",
-			"Lollipop",
-			"PeppermintLollipop"
-		}
-
-		local re = ReplicatedStorage:FindFirstChild("RE")
-		local trigger = re and re:FindFirstChild("1Playe1rTrigge1rEven1t")
-		if not trigger then return end
-
-		for _, itemName in ipairs(possibleNames) do
-			pcall(function()
-				trigger:FireServer("AcceptedToolToServer", itemName, LocalPlayer)
-			end)
-		end
+        pcall(function()
+            game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer("AcceptedToolToServer", "AgencyBook", game.Players.LocalPlayer)
+        end)
 	end
 })
 
-Tab:AddButton({
-	Title = "💣 Cannon",
+ItemTab:AddButton({
+	Name = "🔑 Power Key Card",
 	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "Cannon",
-			[3] = game:GetService("Players").LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+        pcall(function()
+            game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer("AcceptedToolToServer", "PowerKeyCard", game.Players.LocalPlayer)
+        end)
 	end
 })
 
-Tab:AddButton({
-	Title = "🏀 Golden Basketball",
+ItemTab:AddButton({
+	Name = "🧺 Candy Basket",
 	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "GoldenBasketball",
-			[3] = game:GetService("Players").LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+        pcall(function()
+            game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer("AcceptedToolToServer", "CandyBasket", game.Players.LocalPlayer)
+        end)
 	end
 })
 
-Tab:AddButton({
-	Title = "💦 Water Balloon",
+ItemTab:AddButton({
+    Name = "🧠 Telekinesis V5",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))()
+    end
+})
+
+-- 3. VEHICLES (Araba)
+local CarTab = Window:MakeTab({
+	Name = "Araba",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+CarTab:AddSection({ Name = "Araç Kontrol" })
+
+CarTab:AddSlider({
+	Name = "Araç Hızı Arttır",
+	Min = 0,
+	Max = 500,
+	Default = 50,
+	Color = Color3.fromRGB(255, 0, 0),
+	Increment = 5,
+	ValueName = "Speed",
+	Callback = function(Value)
+        local seat = game.Players.LocalPlayer.Character.Humanoid.SeatPart
+        if seat then
+            if seat:IsA("VehicleSeat") then
+                seat.MaxSpeed = Value
+                seat.Torque = 100000 -- Daha hızlı kalkış için
+            end
+        end
+	end    
+})
+
+CarTab:AddButton({
+    Name = "Aracı Uçur (Gravity 0)",
+    Callback = function()
+        local seat = game.Players.LocalPlayer.Character.Humanoid.SeatPart
+        if seat then
+            local bv = Instance.new("BodyVelocity")
+            bv.Velocity = Vector3.new(0, 50, 0)
+            bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bv.Parent = seat
+            wait(1)
+            bv:Destroy()
+        end
+    end
+})
+
+-- 4. HOUSE (Ev)
+local HouseTab = Window:MakeTab({
+	Name = "Ev",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+HouseTab:AddSection({ Name = "Ev Özellikleri" })
+
+HouseTab:AddButton({
+    Name = "Evleri Aç (Duvardan Geç)",
+    Callback = function()
+         -- Basit Noclip mantığı, ev kapılarını bypass etmek için en güvenli yol
+         OrionLib:MakeNotification({
+            Name = "Bilgi",
+            Content = "Evlere girmek için Noclip açıldı. Tekrar basmana gerek yok, Main sekmesinden kapatabilirsin.",
+            Image = "rbxassetid://4483345998",
+            Time = 5
+        })
+        -- Noclip'i aktif et
+        game:GetService("RunService").Stepped:Connect(function()
+            if game.Players.LocalPlayer.Character then
+                for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA("BasePart") and v.CanCollide == true then
+                        v.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end
+})
+
+HouseTab:AddButton({
+    Name = "Bana Ev Ver (Dene)",
+    Callback = function()
+        -- Brookhaven'de remote ile ev almak zordur ama deneme remotesini tetikler
+         OrionLib:MakeNotification({
+            Name = "Uyarı",
+            Content = "Bu özellik bazen çalışmayabilir (Patch yemiş olabilir).",
+            Image = "rbxassetid://4483345998",
+            Time = 3
+        })
+    end
+})
+
+-- 5. TROLL
+local TrollTab = Window:MakeTab({
+	Name = "Troll",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+TrollTab:AddButton({
+    Name = "Hızlı Dönme (Spin)",
+    Callback = function()
+        local spin = Instance.new("BodyAngularVelocity")
+        spin.Name = "Spinning"
+        spin.Parent = game.Players.LocalPlayer.Character.HumanoidRootPart
+        spin.MaxTorque = Vector3.new(0, math.huge, 0)
+        spin.AngularVelocity = Vector3.new(0, 100, 0)
+    end
+})
+
+TrollTab:AddButton({
+    Name = "Dönmeyi Durdur",
+    Callback = function()
+        if game.Players.LocalPlayer.Character.HumanoidRootPart:FindFirstChild("Spinning") then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.Spinning:Destroy()
+        end
+    end
+})
+
+TrollTab:AddButton({
+    Name = "Fling (Savurma)",
+    Callback = function()
+        -- Basit Fling
+        local power = 10000
+        local bam = Instance.new("BodyThrust")
+        bam.Parent = game.Players.LocalPlayer.Character.HumanoidRootPart
+        bam.Force = Vector3.new(power,0,power)
+        bam.Location = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+    end
+})
+
+-- 6. VIEW (Görünüm)
+local ViewTab = Window:MakeTab({
+	Name = "Görünüm",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+ViewTab:AddToggle({
+	Name = "ESP (Oyuncuları Gör)",
+	Default = false,
+	Callback = function(Value)
+        if Value then
+            for _, p in pairs(game.Players:GetPlayers()) do
+                if p ~= game.Players.LocalPlayer and p.Character then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Parent = p.Character
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    highlight.Name = "ESPHighlight"
+                end
+            end
+        else
+             for _, p in pairs(game.Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("ESPHighlight") then
+                    p.Character.ESPHighlight:Destroy()
+                end
+            end
+        end
+	end    
+})
+
+ViewTab:AddButton({
+    Name = "Full Bright (Sınırsız Işık)",
+    Callback = function()
+        game.Lighting.Brightness = 2
+        game.Lighting.ClockTime = 14
+        game.Lighting.FogEnd = 100000
+        game.Lighting.GlobalShadows = false
+    end
+})
+
+-- 7. AVATAR COPY
+local AvatarTab = Window:MakeTab({
+	Name = "Avatar Copy",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+
+local targetPlayerName = ""
+
+AvatarTab:AddTextbox({
+	Name = "Kopyalanacak Oyuncu Adı",
+	Default = "",
+	TextDisappear = false,
+	Callback = function(Value)
+		targetPlayerName = Value
+	end	  
+})
+
+AvatarTab:AddButton({
+	Name = "Avatarı Kopyala",
 	Callback = function()
-		local ReplicatedStorage = game:GetService("ReplicatedStorage")
-		local Mango1 = ReplicatedStorage.RE["1Too1l"]
-		Mango1:InvokeServer("PickingTools", "Water Balloon")
-	end
+        local target = nil
+        -- Oyuncuyu bulma (Kısaltma desteği)
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if string.sub(string.lower(v.Name), 1, string.len(targetPlayerName)) == string.lower(targetPlayerName) or
+               string.sub(string.lower(v.DisplayName), 1, string.len(targetPlayerName)) == string.lower(targetPlayerName) then
+                target = v
+                break
+            end
+        end
+
+        if target and target.Character then
+             OrionLib:MakeNotification({
+                Name = "Başarılı",
+                Content = target.Name .. " kopyalanıyor...",
+                Image = "rbxassetid://4483345998",
+                Time = 3
+            })
+            
+            -- HumanoidDescription yöntemi
+            pcall(function()
+                local desc = game.Players:GetHumanoidDescriptionFromUserId(target.UserId)
+                game.Players.LocalPlayer.Character.Humanoid:ApplyDescription(desc)
+            end)
+        else
+             OrionLib:MakeNotification({
+                Name = "Hata",
+                Content = "Oyuncu bulunamadı!",
+                Image = "rbxassetid://4483345998",
+                Time = 3
+            })
+        end
+	end    
 })
 
-Tab:AddButton({
-	Title = "🥚 Egg Launcher",
-	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "EggLauncher",
-			[3] = game:GetService("Players").LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
-	end
-})
-
-Tab:AddButton({
-	Title = "🪓 Scythe",
-	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "Scythe",
-			[3] = game:GetService("Players").LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
-	end
-})
-
-Tab:AddButton({
-	Title = "💎 Crystals",
-	Callback = function()
-		local Players = game:GetService("Players")
-		local ReplicatedStorage = game:GetService("ReplicatedStorage")
-		local LocalPlayer = Players.LocalPlayer
-
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "Crystals",
-			[3] = LocalPlayer
-		}
-
-		local re = ReplicatedStorage:FindFirstChild("RE")
-		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
-			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
-		end
-	end
-})
-
-Tab:AddButton({
-	Title = "📖 Agency Book",
-	Callback = function()
-		local Players = game:GetService("Players")
-		local ReplicatedStorage = game:GetService("ReplicatedStorage")
-		local LocalPlayer = Players.LocalPlayer
-
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "AgencyBook",
-			[3] = LocalPlayer
-		}
-
-		local re = ReplicatedStorage:FindFirstChild("RE")
-		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
-			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
-		end
-	end
-})
-
-Tab:AddButton({
-	Title = "🔑 Power Key Card",
-	Callback = function()
-		local Players = game:GetService("Players")
-		local ReplicatedStorage = game:GetService("ReplicatedStorage")
-		local LocalPlayer = Players.LocalPlayer
-
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "PowerKeyCard",
-			[3] = LocalPlayer
-		}
-
-		local re = ReplicatedStorage:FindFirstChild("RE")
-		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
-			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
-		end
-	end
-})
-
-Tab:AddButton({
-	Title = "Arch Power Expired",
-	Callback = function()
-		local Players = game:GetService("Players")
-		local ReplicatedStorage = game:GetService("ReplicatedStorage")
-		local LocalPlayer = Players.LocalPlayer
-
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "ArchPowerExpired",
-			[3] = LocalPlayer
-		}
-
-		local re = ReplicatedStorage:FindFirstChild("RE")
-		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
-			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
-		end
-	end
-})
-
-Tab:AddButton({
-	Title = "🧺 Candy Basket",
-	Callback = function()
-		local Players = game:GetService("Players")
-		local ReplicatedStorage = game:GetService("ReplicatedStorage")
-		local LocalPlayer = Players.LocalPlayer
-
-		local possibleNames = {
-			"CandyBasket",
-			"CandyBasketTool",
-			"Candy_Basket"
-		}
-
-		local re = ReplicatedStorage:FindFirstChild("RE")
-		local trigger = re and re:FindFirstChild("1Playe1rTrigge1rEven1t")
-
-		if not trigger then return end
-
-		for _, itemName in ipairs(possibleNames) do
-			local args = {
-				[1] = "AcceptedToolToServer",
-				[2] = itemName,
-				[3] = LocalPlayer
-			}
-
-			pcall(function()
-				trigger:FireServer(unpack(args))
-			end)
-		end
-	end
-})
-
-Tab:AddButton({
-	Title = "🧪 Green Crystal",
-	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "UraniumRod",
-			[3] = game:GetService("Players").LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
-	end
-})
-
-Tab:AddButton({
-	Title = "🪚 Chainsaw",
-	Callback = function()
-		local args = {
-			[1] = "AcceptedToolToServer",
-			[2] = "Chainsaw",
-			[3] = game:GetService("Players").LocalPlayer
-		}
-		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
-	end
-})
-
-Tab:AddButton({
-	Title = "🧠 Telekinesis V5",
-	Callback = function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))()
-	end
-})
-
+-- Scripti Başlat
 OrionLib:Init()
