@@ -9,7 +9,8 @@ local Window = OrionLib:MakeWindow({
     HidePremium = false, 
     SaveConfig = true, 
     ConfigFolder = "LyraV4",
-    IntroText = "Lyra Hub Yükleniyor..."
+    IntroText = "Lyra Hub Yükleniyor...",
+    IntroIcon = "rbxassetid://4483345998"
 })
 
 -- Değişkenler
@@ -32,13 +33,21 @@ MainTab:AddSection({ Name = "Karakter Ayarları" })
 MainTab:AddSlider({
     Name = "Yürüme Hızı",
     Min = 16, Max = 500, Default = 16, Increment = 1,
-    Callback = function(v) lp.Character.Humanoid.WalkSpeed = v end
+    Callback = function(v) 
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid.WalkSpeed = v 
+        end
+    end
 })
 
 MainTab:AddSlider({
     Name = "Zıplama Gücü",
     Min = 50, Max = 500, Default = 50, Increment = 1,
-    Callback = function(v) lp.Character.Humanoid.JumpPower = v end
+    Callback = function(v) 
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid.JumpPower = v 
+        end
+    end
 })
 
 MainTab:AddToggle({
@@ -63,7 +72,14 @@ MainTab:AddButton({
     end
 })
 
--- 2. EŞYALAR (SENİN İSTEDİĞİN ÖZEL SİLAHLAR)
+MainTab:AddButton({
+    Name = "Yeniden Doğ (Reset)",
+    Callback = function()
+        lp.Character:BreakJoints()
+    end
+})
+
+-- 2. EŞYALAR (ÖZEL SİLAHLAR VE ARAÇLAR)
 ItemTab:AddSection({ Name = "Özel Eşyalar" })
 
 local function GetTool(toolName)
@@ -77,9 +93,12 @@ ItemTab:AddButton({ Name = "🪂 Glider", Callback = function() GetTool("Glider"
 ItemTab:AddButton({ Name = "❄️ Snowball Cannon", Callback = function() GetTool("SnowballCannon") end })
 ItemTab:AddButton({ Name = "💣 Cannon", Callback = function() GetTool("Cannon") end })
 ItemTab:AddButton({ Name = "🪓 Scythe", Callback = function() GetTool("Scythe") end })
+ItemTab:AddButton({ Name = "🏀 Golden Basketball", Callback = function() GetTool("GoldenBasketball") end })
+ItemTab:AddButton({ Name = "🧪 Yeşil Kristal", Callback = function() GetTool("UraniumRod") end })
+ItemTab:AddButton({ Name = "🪚 Chainsaw", Callback = function() GetTool("Chainsaw") end })
 ItemTab:AddButton({ Name = "🧠 Telekinesis V5", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))() end })
 
--- 3. ARABA (MAX HIZ VE KONTROL)
+-- 3. ARABA (MAX HIZ VE RGB)
 CarTab:AddSection({ Name = "Araç Modifiye" })
 
 CarTab:AddButton({
@@ -92,6 +111,27 @@ CarTab:AddButton({
         else
             OrionLib:MakeNotification({Name = "Hata", Content = "Önce bir araca binmelisin!", Time = 3})
         end
+    end
+})
+
+CarTab:AddToggle({
+    Name = "Araba RGB Modu",
+    Default = false,
+    Callback = function(state)
+        _G.CarRGB = state
+        task.spawn(function()
+            while _G.CarRGB do
+                local seat = lp.Character.Humanoid.SeatPart
+                if seat and seat.Parent then
+                    for _, v in pairs(seat.Parent:GetDescendants()) do
+                        if v:IsA("BasePart") or v:IsA("MeshPart") then
+                            v.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
     end
 })
 
@@ -108,7 +148,7 @@ CarTab:AddButton({
     end
 })
 
--- 4. EV (GİZLİ YERLER VE SES)
+-- 4. EV (GİZLİ YERLER VE DÜNYA)
 HouseTab:AddSection({ Name = "Dünya Etkileşimi" })
 
 HouseTab:AddButton({
@@ -123,12 +163,19 @@ HouseTab:AddButton({
     end
 })
 
--- 5. AVATAR COPY (LYRA STYLE)
+HouseTab:AddButton({
+    Name = "Işınlan: Banka Kasası",
+    Callback = function()
+        lp.Character.HumanoidRootPart.CFrame = CFrame.new(157, 13, -177)
+    end
+})
+
+-- 5. AVATAR COPY (GELİŞMİŞ)
 AvatarTab:AddSection({ Name = "Kıyafet Çalma" })
 
 local targetName = ""
 AvatarTab:AddTextbox({
-    Name = "Oyuncu Adı (Kısaltma olur)",
+    Name = "Oyuncu Adı",
     Default = "",
     TextDisappear = false,
     Callback = function(v) targetName = v end
@@ -141,6 +188,7 @@ AvatarTab:AddButton({
             if string.find(string.lower(p.Name), string.lower(targetName)) or string.find(string.lower(p.DisplayName), string.lower(targetName)) then
                 local desc = Players:GetHumanoidDescriptionFromUserId(p.UserId)
                 lp.Character.Humanoid:ApplyDescription(desc)
+                OrionLib:MakeNotification({Name = "Başarılı", Content = p.Name .. " kopyalandı!", Time = 2})
                 break
             end
         end
@@ -148,7 +196,7 @@ AvatarTab:AddButton({
 })
 
 -- 6. TROLL
-TrollTab:AddSection({ Name = "Eğlence" })
+TrollTab:AddSection({ Name = "Eğlence Menüsü" })
 
 TrollTab:AddButton({
     Name = "Fling (Herkesi Fırlat)",
@@ -176,24 +224,35 @@ TrollTab:AddButton({
     end
 })
 
--- AÇ/KAPAT BUTONU (EKRANDA SABİT)
+-- AÇ/KAPAT BUTONU (MODERN TASARIM)
 local OpenGui = Instance.new("ScreenGui")
 local OpenBtn = Instance.new("TextButton")
+local UIStroke = Instance.new("UIStroke")
+local UICorner = Instance.new("UICorner")
+
 OpenGui.Name = "LyraOpener"
 OpenGui.Parent = lp:WaitForChild("PlayerGui")
+OpenGui.ResetOnSpawn = false
+
 OpenBtn.Parent = OpenGui
 OpenBtn.BackgroundColor3 = Color3.fromRGB(145, 90, 230)
-OpenBtn.Size = UDim2.new(0, 50, 0, 50)
-OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
+OpenBtn.Size = UDim2.new(0, 60, 0, 30)
+OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
 OpenBtn.Text = "LYRA"
+OpenBtn.Font = Enum.Font.GothamBold
+OpenBtn.TextSize = 14
 OpenBtn.TextColor3 = Color3.new(1,1,1)
 OpenBtn.Draggable = true
 
-local UICorner = Instance.new("UICorner", OpenBtn)
-UICorner.CornerRadius = Tool.new(0, 50)
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = OpenBtn
+
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.new(1,1,1)
+UIStroke.Parent = OpenBtn
 
 OpenBtn.MouseButton1Click:Connect(function()
-    OrionLib:Init() -- Menüyü geri getirir veya Orion tuşunu kullan (RightShift)
+    OrionLib:Init() 
 end)
 
 OrionLib:Init()
