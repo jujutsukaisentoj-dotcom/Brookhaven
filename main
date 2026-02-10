@@ -1,155 +1,199 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+--[[
+    Lyra Hub - Brookhaven RP Ultimate V4
+    Özellikler: Karakter, Araba, Ev, Troll, Avatar, Eşyalar
+]]
 
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({
     Name = "Lyra Hub | Brookhaven RP", 
     HidePremium = false, 
     SaveConfig = true, 
-    ConfigFolder = "LyraBrookhavenV4",
-    IntroEnabled = true,
+    ConfigFolder = "LyraV4",
     IntroText = "Lyra Hub Yükleniyor..."
 })
 
---[[ 
-    TAB LİSTESİ:
-    1. Ana Menü (Main)
-    2. Eşyalar (Items)
-    3. Araba (Vehicle)
-    4. Ev (House)
-    5. Troll (Troll View)
-    6. Avatar (Copy System)
-]]
+-- Değişkenler
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local RE = game:GetService("ReplicatedStorage"):WaitForChild("RE")
+local triggerEvent = RE:WaitForChild("1Playe1rTrigge1rEven1t")
 
--- 1. ANA MENÜ (Karakter Özellikleri)
-local MainTab = Window:MakeTab({
-	Name = "Ana Menü",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
+-- Sekmeler
+local MainTab = Window:MakeTab({ Name = "Karakter", Icon = "rbxassetid://4483345998" })
+local ItemTab = Window:MakeTab({ Name = "Eşyalar", Icon = "rbxassetid://4483345998" })
+local CarTab = Window:MakeTab({ Name = "Araba", Icon = "rbxassetid://4483345998" })
+local HouseTab = Window:MakeTab({ Name = "Ev & Dünya", Icon = "rbxassetid://4483345998" })
+local AvatarTab = Window:MakeTab({ Name = "Avatar Copy", Icon = "rbxassetid://4483345998" })
+local TrollTab = Window:MakeTab({ Name = "Troll", Icon = "rbxassetid://4483345998" })
 
-MainTab:AddSection({ Name = "Karakter Kontrolü" })
+-- 1. ANA MENÜ (KARAKTER)
+MainTab:AddSection({ Name = "Karakter Ayarları" })
 
 MainTab:AddSlider({
-	Name = "Yürüme Hızı",
-	Min = 16, Max = 500, Default = 16, Increment = 1,
-	Callback = function(Value) game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value end    
+    Name = "Yürüme Hızı",
+    Min = 16, Max = 500, Default = 16, Increment = 1,
+    Callback = function(v) lp.Character.Humanoid.WalkSpeed = v end
+})
+
+MainTab:AddSlider({
+    Name = "Zıplama Gücü",
+    Min = 50, Max = 500, Default = 50, Increment = 1,
+    Callback = function(v) lp.Character.Humanoid.JumpPower = v end
+})
+
+MainTab:AddToggle({
+    Name = "Noclip (Duvardan Geç)",
+    Default = false,
+    Callback = function(state)
+        _G.Noclip = state
+        game:GetService("RunService").Stepped:Connect(function()
+            if _G.Noclip and lp.Character then
+                for _, v in pairs(lp.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then v.CanCollide = false end
+                end
+            end
+        end)
+    end
 })
 
 MainTab:AddButton({
-	Name = "Duvardan Geçme (Noclip)",
-	Callback = function()
-        game:GetService("RunService").Stepped:Connect(function()
-            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = false end
-            end
-        end)
-	end
+    Name = "Uçma Modu (Fly)",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+    end
 })
 
--- 2. EŞYALAR (Scriptindeki Özel Tool'lar) [cite: 155, 156]
-local ItemTab = Window:MakeTab({
-	Name = "Eşyalar",
-	Icon = "rbxassetid://4483345998"
-})
+-- 2. EŞYALAR (SENİN İSTEDİĞİN ÖZEL SİLAHLAR)
+ItemTab:AddSection({ Name = "Özel Eşyalar" })
 
-ItemTab:AddButton({
-	Name = "💸 Money Gun Al",
-	Callback = function()
-        game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer("AcceptedToolToServer", "MoneyGun", game.Players.LocalPlayer)
-	end
-})
+local function GetTool(toolName)
+    pcall(function()
+        triggerEvent:FireServer("AcceptedToolToServer", toolName, lp)
+    end)
+end
 
-ItemTab:AddButton({
-	Name = "🔥 Telekinesis V5 Yükle",
-	Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))()
-	end
-})
+ItemTab:AddButton({ Name = "💸 Money Gun", Callback = function() GetTool("MoneyGun") end })
+ItemTab:AddButton({ Name = "🪂 Glider", Callback = function() GetTool("Glider") end })
+ItemTab:AddButton({ Name = "❄️ Snowball Cannon", Callback = function() GetTool("SnowballCannon") end })
+ItemTab:AddButton({ Name = "💣 Cannon", Callback = function() GetTool("Cannon") end })
+ItemTab:AddButton({ Name = "🪓 Scythe", Callback = function() GetTool("Scythe") end })
+ItemTab:AddButton({ Name = "🧠 Telekinesis V5", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))() end })
 
--- 3. ARABA (Hız ve RGB Modları) [cite: 56, 57, 58]
-local CarTab = Window:MakeTab({
-	Name = "Araba",
-	Icon = "rbxassetid://4483345998"
-})
+-- 3. ARABA (MAX HIZ VE KONTROL)
+CarTab:AddSection({ Name = "Araç Modifiye" })
 
-CarTab:AddTextBox({
-	Name = "Hız Ayarı (MaxSpeed)",
-	Default = "200",
-	Callback = function(Value)
-        local seat = game.Players.LocalPlayer.Character.Humanoid.SeatPart
+CarTab:AddButton({
+    Name = "Araba Hız Limitini Kaldır (200 KMH)",
+    Callback = function()
+        local seat = lp.Character.Humanoid.SeatPart
         if seat and seat:IsA("VehicleSeat") then
-            seat.MaxSpeed = tonumber(Value)
+            seat.MaxSpeed = 200
+            seat.Torque = 10000
+        else
+            OrionLib:MakeNotification({Name = "Hata", Content = "Önce bir araca binmelisin!", Time = 3})
         end
-	end
+    end
 })
 
-CarTab:AddToggle({
-	Name = "🌈 Araba RGB Modu",
-	Default = false,
-	Callback = function(state)
-        -- Dosyadaki RGB döngüsü buraya entegre edildi
-        _G.RGB_Loop = state
-        while _G.RGB_Loop do
-            -- Renk değiştirme mantığı [cite: 58]
-            task.wait(0.1)
+CarTab:AddButton({
+    Name = "Zıplayan Araba",
+    Callback = function()
+        local seat = lp.Character.Humanoid.SeatPart
+        if seat then
+            local bf = Instance.new("BodyForce", seat)
+            bf.Force = Vector3.new(0, seat:GetMass() * 500, 0)
+            wait(0.2)
+            bf:Destroy()
         end
-	end
+    end
 })
 
--- 4. EV SİSTEMİ (House & Audio) [cite: 155]
-local HouseTab = Window:MakeTab({
-	Name = "Ev Menüsü",
-	Icon = "rbxassetid://4483345998"
-})
+-- 4. EV (GİZLİ YERLER VE SES)
+HouseTab:AddSection({ Name = "Dünya Etkileşimi" })
 
 HouseTab:AddButton({
-	Name = "Tüm Evlere Gir (Duvardan Geç)",
-	Callback = function()
-        -- Evleri bypass etmek için collision kapatır
-	end
+    Name = "Tüm Evlerin Kapısını Aç",
+    Callback = function()
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v.Name == "Door" or v.Name == "Gate" then
+                v.CanCollide = false
+                v.Transparency = 0.5
+            end
+        end
+    end
 })
 
--- 5. AVATAR KOPYALAMA (Copy System) 
-local AvatarTab = Window:MakeTab({
-	Name = "Avatar",
-	Icon = "rbxassetid://10734952036"
-})
+-- 5. AVATAR COPY (LYRA STYLE)
+AvatarTab:AddSection({ Name = "Kıyafet Çalma" })
 
-local selectedTarget = ""
+local targetName = ""
 AvatarTab:AddTextbox({
-	Name = "Hedef Oyuncu Adı",
-	Default = "",
-	Callback = function(Value) selectedTarget = Value end
+    Name = "Oyuncu Adı (Kısaltma olur)",
+    Default = "",
+    TextDisappear = false,
+    Callback = function(v) targetName = v end
 })
 
 AvatarTab:AddButton({
-	Name = "Kıyafetleri Kopyala",
-	Callback = function()
-        local targetPlayer = game.Players:FindFirstChild(selectedTarget)
-        if targetPlayer then
-            local desc = game.Players:GetHumanoidDescriptionFromUserId(targetPlayer.UserId)
-            game.Players.LocalPlayer.Character.Humanoid:ApplyDescription(desc)
-        end
-	end
-})
-
--- 6. TROLL & VIEW [cite: 30, 108]
-local TrollTab = Window:MakeTab({
-	Name = "Troll",
-	Icon = "rbxassetid://4483345998"
-})
-
-TrollTab:AddButton({
-	Name = "Stalker Modu (Takip Et)",
-	Callback = function()
-        -- Dosyadaki Stalker mantığı [cite: 30]
-	end
-})
-
-TrollTab:AddButton({
-    Name = "Eşya Silici (Dedupe Tools)",
+    Name = "Avatarı Kopyala",
     Callback = function()
-        -- Tool temizleme fonksiyonu [cite: 108, 109]
+        for _, p in pairs(Players:GetPlayers()) do
+            if string.find(string.lower(p.Name), string.lower(targetName)) or string.find(string.lower(p.DisplayName), string.lower(targetName)) then
+                local desc = Players:GetHumanoidDescriptionFromUserId(p.UserId)
+                lp.Character.Humanoid:ApplyDescription(desc)
+                break
+            end
+        end
     end
 })
+
+-- 6. TROLL
+TrollTab:AddSection({ Name = "Eğlence" })
+
+TrollTab:AddButton({
+    Name = "Fling (Herkesi Fırlat)",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/0866/lua/main/UniversalFling.lua"))()
+    end
+})
+
+TrollTab:AddButton({
+    Name = "View Player (Oyuncuyu İzle)",
+    Callback = function()
+        for _, p in pairs(Players:GetPlayers()) do
+            if string.find(string.lower(p.Name), string.lower(targetName)) then
+                workspace.CurrentCamera.CameraSubject = p.Character.Humanoid
+                break
+            end
+        end
+    end
+})
+
+TrollTab:AddButton({
+    Name = "Kendi Kamerana Dön",
+    Callback = function()
+        workspace.CurrentCamera.CameraSubject = lp.Character.Humanoid
+    end
+})
+
+-- AÇ/KAPAT BUTONU (EKRANDA SABİT)
+local OpenGui = Instance.new("ScreenGui")
+local OpenBtn = Instance.new("TextButton")
+OpenGui.Name = "LyraOpener"
+OpenGui.Parent = lp:WaitForChild("PlayerGui")
+OpenBtn.Parent = OpenGui
+OpenBtn.BackgroundColor3 = Color3.fromRGB(145, 90, 230)
+OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
+OpenBtn.Text = "LYRA"
+OpenBtn.TextColor3 = Color3.new(1,1,1)
+OpenBtn.Draggable = true
+
+local UICorner = Instance.new("UICorner", OpenBtn)
+UICorner.CornerRadius = Tool.new(0, 50)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    OrionLib:Init() -- Menüyü geri getirir veya Orion tuşunu kullan (RightShift)
+end)
 
 OrionLib:Init()
