@@ -1,318 +1,351 @@
---[[
-    XENOHUB - BROOKHAVEN RP EDITION V4 (FULL RE ACCESS)
-    - RE Folder (RemoteEvents) Entegrasyonu
-    - MoneyGun & Gizli Eşyalar (Item Giver)
-    - 1Flying, 1Faster, 1Gun gibi Admin Özellikleri
-]]
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
+local Window = OrionLib:MakeWindow({Name = "XenoHub - Brookhaven Items", HidePremium = false, SaveConfig = true, ConfigFolder = "XenoHub"})
 
-local lp = Players.LocalPlayer
-local targetParent = (gethui and gethui()) or (game:GetService("RunService"):IsStudio() and lp:WaitForChild("PlayerGui") or CoreGui)
+-- Sekme Oluşturma
+local Tab = Window:MakeTab({
+	Name = "Eşyalar (Items)",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
 
--- [SYSTEM] RE Folder Tespiti
-local RE = ReplicatedStorage:FindFirstChild("RE") or ReplicatedStorage:FindFirstChild("RemoteEvents")
-if not RE then
-    warn("XenoHub: RE Klasörü bulunamadı, ReplicatedStorage taranıyor...")
-    for _, v in pairs(ReplicatedStorage:GetChildren()) do
-        if v:FindFirstChild("1Tool") or v:FindFirstChild("1Gun") then
-            RE = v
-            break
-        end
-    end
-end
+-- SENİN KODLARIN BURADA BAŞLIYOR --
 
--- [SYSTEM] Item Verici Fonksiyonu
-local function GiveItem(itemName)
-    if RE and RE:FindFirstChild("1Tool") then
-        -- Genellikle Brookhaven '1Tool' remote'u ile eşya kuşanır
-        RE["1Tool"]:FireServer("Equip", itemName) 
-        
-        -- Alternatif Yöntem (Bazı sürümlerde farklı çalışabilir)
-        task.wait(0.1)
-        if RE:FindFirstChild("1GiveTool") then
-             RE["1GiveTool"]:FireServer(itemName)
-        end
-    else
-        warn("XenoHub: '1Tool' remote bulunamadı!")
-    end
-end
+Tab:AddButton({
+	Title = "💸 Money Gun",
+	Callback = function()
+		local rep = game:GetService("ReplicatedStorage")
+		local Players = game:GetService("Players")
+		local localPlayer = Players.LocalPlayer
+		local itemName = "MoneyGun"
 
--- Ayarlar
-_G.BrookConfig = {
-    PremiumUnlock = false,
-    VehicleUnlock = false,
-    FlyingMode = false,
-    SpeedMode = false
-}
+		local function tryNotify(title, text)
+			pcall(function()
+				game:GetService("StarterGui"):SetCore("SendNotification", {
+					Title = title,
+					Text = text,
+					Duration = 4
+				})
+			end)
+		end
 
--- UI OLUŞTURMA
-if targetParent:FindFirstChild("BrookXenoV4") then targetParent.BrookXenoV4:Destroy() end
+		local ok, err = pcall(function()
+			local re = rep:FindFirstChild("RE") or rep:FindFirstChild("Remotes") or rep
+			local candidates = {"GetItem", "Getİtem", "Get_Item", "GetTool", "GetToolToServer"}
 
-local ScreenGui = Instance.new("ScreenGui", targetParent)
-ScreenGui.Name = "BrookXenoV4"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+			for _, name in ipairs(candidates) do
+				local r = re:FindFirstChild(name)
+				if r then
+					if r.InvokeServer then
+						r:InvokeServer(itemName)
+						tryNotify("💸 Money Gun", "Requested via "..name.." ⚡")
+						return
+					elseif r.FireServer then
+						r:FireServer(itemName)
+						tryNotify("💸 Money Gun", "Requested via "..name.." 🔥")
+						return
+					end
+				end
+			end
 
-local Main = Instance.new("Frame", ScreenGui)
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 340, 0, 450)
-Main.Position = UDim2.new(0.5, -170, 0.5, -225)
-Main.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
-Main.BorderSizePixel = 0
-Main.ClipsDescendants = true
+			local trigger = re:FindFirstChild("1Playe1rTrigge1rEven1t") or rep:FindFirstChild("1Playe1rTrigge1rEven1t")
+			if trigger then
+				local args = {
+					[1] = "AcceptedToolToServer",
+					[2] = itemName,
+					[3] = localPlayer
+				}
 
-local Corner = Instance.new("UICorner", Main)
-Corner.CornerRadius = UDim.new(0, 16)
+				if trigger.FireServer then
+					trigger:FireServer(unpack(args))
+					tryNotify("💸 Money Gun", "Triggered successfully 🎯")
+					return
+				elseif trigger.InvokeServer then
+					trigger:InvokeServer(unpack(args))
+					tryNotify("💸 Money Gun", "Triggered successfully ⚙️")
+					return
+				end
+			end
 
-local Stroke = Instance.new("UIStroke", Main)
-Stroke.Thickness = 2
-Stroke.Color = Color3.fromRGB(0, 255, 170) -- Neon Yeşil Tema (RE Hacker Teması)
-Stroke.Transparency = 0.4
+			local topRemotes = rep:FindFirstChild("Remotes")
+			if topRemotes then
+				local r = topRemotes:FindFirstChild("GetItem") or topRemotes:FindFirstChild("Getİtem")
+				if r and r.FireServer then
+					r:FireServer(itemName)
+					tryNotify("💸 Money Gun", "Requested via Remotes 📡")
+					return
+				end
+			end
 
--- Başlık
-local Header = Instance.new("Frame", Main)
-Header.Size = UDim2.new(1, 0, 0, 55)
-Header.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-Header.BorderSizePixel = 0
+			tryNotify("💸 Money Gun", "No suitable remote found ❌")
+		end)
 
-local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(1, -50, 1, 0)
-Title.Position = UDim2.new(0, 15, 0, 0)
-Title.Text = "XENO <font color='#00ffaa'>RE-ADMIN</font>"
-Title.RichText = true
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.Font = Enum.Font.GothamBlack
-Title.TextSize = 20
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.BackgroundTransparency = 1
+		if not ok then
+			tryNotify("💸 Money Gun", "Error: "..tostring(err).." ⚠️")
+		end
+	end
+})
 
--- Kaydırma Alanı
-local Scroll = Instance.new("ScrollingFrame", Main)
-Scroll.Position = UDim2.new(0, 10, 0, 65)
-Scroll.Size = UDim2.new(1, -20, 1, -75)
-Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 800)
-Scroll.ScrollBarThickness = 3
-Scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
+Tab:AddButton({
+	Title = "🪂 Glider",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "Glider",
+			[3] = game:GetService("Players").LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+	end
+})
 
-local Layout = Instance.new("UIListLayout", Scroll)
-Layout.Padding = UDim.new(0, 12)
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Tab:AddButton({
+	Title = "❄️ Snowball Cannon",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "SnowballCannon",
+			[3] = game.Players.LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+	end
+})
 
--- UI Yardımcıları
-local function CreateSection(text)
-    local Label = Instance.new("TextLabel", Scroll)
-    Label.Size = UDim2.new(1, 0, 0, 25)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = Color3.fromRGB(150, 150, 150)
-    Label.Font = Enum.Font.GothamBold
-    Label.TextSize = 12
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-end
+Tab:AddButton({
+	Title = "☃️ Snowball",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "SnowBall",
+			[3] = game.Players.LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+	end
+})
 
-local function CreateButton(text, iconID, callback)
-    local Btn = Instance.new("TextButton", Scroll)
-    Btn.Size = UDim2.new(1, 0, 0, 45)
-    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    Btn.Text = ""
-    Btn.AutoButtonColor = false
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
-    
-    local Icon = Instance.new("ImageLabel", Btn)
-    Icon.Size = UDim2.new(0, 24, 0, 24)
-    Icon.Position = UDim2.new(0, 12, 0.5, -12)
-    Icon.BackgroundTransparency = 1
-    Icon.Image = iconID or ""
-    
-    local Lbl = Instance.new("TextLabel", Btn)
-    Lbl.Size = UDim2.new(1, -50, 1, 0)
-    Lbl.Position = UDim2.new(0, 45, 0, 0)
-    Lbl.Text = text
-    Lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Lbl.Font = Enum.Font.GothamBold
-    Lbl.TextSize = 13
-    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-    Lbl.BackgroundTransparency = 1
-    
-    local ActionIcon = Instance.new("ImageLabel", Btn)
-    ActionIcon.Size = UDim2.new(0, 16, 0, 16)
-    ActionIcon.Position = UDim2.new(1, -25, 0.5, -8)
-    ActionIcon.Image = "rbxassetid://6031094670" -- Ok ikonu
-    ActionIcon.BackgroundTransparency = 1
-    
-    Btn.MouseButton1Click:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(50, 50, 55)}):Play()
-        task.wait(0.1)
-        TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 35)}):Play()
-        callback()
-    end)
-end
+Tab:AddButton({
+	Title = "🍭 Lollipop Peppermint",
+	Callback = function()
+		local Players = game:GetService("Players")
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local LocalPlayer = Players.LocalPlayer
 
-local function CreateToggle(text, configKey, callback)
-    local Btn = Instance.new("TextButton", Scroll)
-    Btn.Size = UDim2.new(1, 0, 0, 45)
-    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    Btn.Text = ""
-    Btn.AutoButtonColor = false
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
+		local possibleNames = {
+			"LollipopPeppermint",
+			"Lollipop_Peppermint",
+			"Lollipop",
+			"PeppermintLollipop"
+		}
 
-    local Lbl = Instance.new("TextLabel", Btn)
-    Lbl.Size = UDim2.new(1, -60, 1, 0)
-    Lbl.Position = UDim2.new(0, 15, 0, 0)
-    Lbl.Text = text
-    Lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-    Lbl.Font = Enum.Font.GothamMedium
-    Lbl.TextSize = 13
-    Lbl.TextXAlignment = Enum.TextXAlignment.Left
-    Lbl.BackgroundTransparency = 1
+		local re = ReplicatedStorage:FindFirstChild("RE")
+		local trigger = re and re:FindFirstChild("1Playe1rTrigge1rEven1t")
+		if not trigger then return end
 
-    local Indicator = Instance.new("Frame", Btn)
-    Indicator.Size = UDim2.new(0, 36, 0, 18)
-    Indicator.Position = UDim2.new(1, -45, 0.5, -9)
-    Indicator.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-    Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
+		for _, itemName in ipairs(possibleNames) do
+			pcall(function()
+				trigger:FireServer("AcceptedToolToServer", itemName, LocalPlayer)
+			end)
+		end
+	end
+})
 
-    local Circle = Instance.new("Frame", Indicator)
-    Circle.Size = UDim2.new(0, 14, 0, 14)
-    Circle.Position = UDim2.new(0, 2, 0.5, -7)
-    Circle.BackgroundColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
+Tab:AddButton({
+	Title = "💣 Cannon",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "Cannon",
+			[3] = game:GetService("Players").LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+	end
+})
 
-    Btn.MouseButton1Click:Connect(function()
-        _G.BrookConfig[configKey] = not _G.BrookConfig[configKey]
-        local active = _G.BrookConfig[configKey]
-        
-        TweenService:Create(Indicator, TweenInfo.new(0.3), {
-            BackgroundColor3 = active and Color3.fromRGB(0, 255, 170) or Color3.fromRGB(50, 50, 55)
-        }):Play()
-        TweenService:Create(Circle, TweenInfo.new(0.3), {
-            Position = active and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-        }):Play()
+Tab:AddButton({
+	Title = "🏀 Golden Basketball",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "GoldenBasketball",
+			[3] = game:GetService("Players").LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+	end
+})
 
-        if callback then callback(active) end
-    end)
-end
+Tab:AddButton({
+	Title = "💦 Water Balloon",
+	Callback = function()
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local Mango1 = ReplicatedStorage.RE["1Too1l"]
+		Mango1:InvokeServer("PickingTools", "Water Balloon")
+	end
+})
 
--- ============================================================================== --
--- [RE] ÖZEL EŞYALAR VE ARAÇLAR
--- ============================================================================== --
+Tab:AddButton({
+	Title = "🥚 Egg Launcher",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "EggLauncher",
+			[3] = game:GetService("Players").LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+	end
+})
 
-CreateSection("🔥 ÖZEL EŞYALAR (RE: 1Tool)")
+Tab:AddButton({
+	Title = "🪓 Scythe",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "Scythe",
+			[3] = game:GetService("Players").LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+	end
+})
 
-CreateButton("Money Gun (Para Tabancası)", "rbxassetid://6031068426", function()
-    GiveItem("MoneyGun")
-    GiveItem("Money") -- Bazen isim farklı olabilir, ikisini de dener
-end)
+Tab:AddButton({
+	Title = "💎 Crystals",
+	Callback = function()
+		local Players = game:GetService("Players")
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local LocalPlayer = Players.LocalPlayer
 
-CreateButton("Ban Hammer (Yasaklama Çekici)", "rbxassetid://6031068426", function()
-    GiveItem("BanHammer")
-end)
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "Crystals",
+			[3] = LocalPlayer
+		}
 
-CreateButton("AK-47 (Silah)", "rbxassetid://6031068426", function()
-    if RE and RE:FindFirstChild("1Gun") then
-        RE["1Gun"]:FireServer("Equip") -- '1Gun' Remote'unu dener
-    else
-        GiveItem("AK47")
-        GiveItem("Gun")
-    end
-end)
+		local re = ReplicatedStorage:FindFirstChild("RE")
+		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
+			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+		end
+	end
+})
 
-CreateButton("Identity Card (Kimlik)", "rbxassetid://6031068426", function()
-    GiveItem("IDCard")
-    GiveItem("Card")
-end)
+Tab:AddButton({
+	Title = "📖 Agency Book",
+	Callback = function()
+		local Players = game:GetService("Players")
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local LocalPlayer = Players.LocalPlayer
 
--- ============================================================================== --
--- [RE] ADMIN MODLARI
--- ============================================================================== --
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "AgencyBook",
+			[3] = LocalPlayer
+		}
 
-CreateSection("⚡ ADMIN MODLARI (RE: 1Faster/1Flying)")
+		local re = ReplicatedStorage:FindFirstChild("RE")
+		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
+			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+		end
+	end
+})
 
-CreateToggle("Uçuş Modu (1Flying)", "FlyingMode", function(v)
-    if RE and RE:FindFirstChild("1Flying") then
-        RE["1Flying"]:FireServer(v) -- '1Flying' RE remote'unu tetikler
-    else
-        -- Yedek Fly
-        if v then
-            local bp = Instance.new("BodyVelocity", lp.Character.HumanoidRootPart)
-            bp.Name = "XenoFly"
-            bp.Velocity = Vector3.new(0, 0, 0)
-            bp.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        else
-            if lp.Character.HumanoidRootPart:FindFirstChild("XenoFly") then
-                lp.Character.HumanoidRootPart.XenoFly:Destroy()
-            end
-        end
-    end
-end)
+Tab:AddButton({
+	Title = "🔑 Power Key Card",
+	Callback = function()
+		local Players = game:GetService("Players")
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local LocalPlayer = Players.LocalPlayer
 
-CreateToggle("Hız Modu (1Faster)", "SpeedMode", function(v)
-    if RE and RE:FindFirstChild("1Faster") then
-        RE["1Faster"]:FireServer(v) -- '1Faster' remote'unu kullanır (Oyun içi speed)
-    else
-        if lp.Character then
-            lp.Character.Humanoid.WalkSpeed = v and 80 or 16
-        end
-    end
-end)
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "PowerKeyCard",
+			[3] = LocalPlayer
+		}
 
-CreateButton("Tüm Araçları Getir (1Mobile)", "rbxassetid://6031068426", function()
-    if RE and RE:FindFirstChild("1Mobile") then
-        RE["1Mobile"]:FireServer("SpawnAll") -- Tahmini argüman
-    end
-end)
+		local re = ReplicatedStorage:FindFirstChild("RE")
+		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
+			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+		end
+	end
+})
 
-CreateButton("Envanteri Temizle (1ClearTools)", "rbxassetid://6031236161", function()
-    if RE and RE:FindFirstChild("1ClearTools") then
-        RE["1ClearTools"]:FireServer()
-    else
-        lp.Backpack:ClearAllChildren()
-    end
-end)
+Tab:AddButton({
+	Title = "Arch Power Expired",
+	Callback = function()
+		local Players = game:GetService("Players")
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local LocalPlayer = Players.LocalPlayer
 
--- ============================================================================== --
--- [PREMIUM] GAMEPASSLER
--- ============================================================================== --
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "ArchPowerExpired",
+			[3] = LocalPlayer
+		}
 
-CreateSection("💎 GAMEPASS & KİLİTLER")
+		local re = ReplicatedStorage:FindFirstChild("RE")
+		if re and re:FindFirstChild("1Playe1rTrigge1rEven1t") then
+			re["1Playe1rTrigge1rEven1t"]:FireServer(unpack(args))
+		end
+	end
+})
 
-CreateToggle("Premium Kilidini Aç", "PremiumUnlock", function(v)
-    if v then
-        local remote = ReplicatedStorage:FindFirstChild("IncentivizedAds") or ReplicatedStorage:FindFirstChild("AdReward")
-        if remote then
-            remote:FireServer("Premium", "VideoAd")
-        end
-    end
-end)
+Tab:AddButton({
+	Title = "🧺 Candy Basket",
+	Callback = function()
+		local Players = game:GetService("Players")
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local LocalPlayer = Players.LocalPlayer
 
-CreateToggle("Tüm Araç Paketleri", "VehicleUnlock", function(v)
-    if v then
-        local remote = ReplicatedStorage:FindFirstChild("IncentivizedAds")
-        if remote then
-            remote:FireServer("VehiclePack", "VideoAd")
-        end
-    end
-end)
+		local possibleNames = {
+			"CandyBasket",
+			"CandyBasketTool",
+			"Candy_Basket"
+		}
 
--- Kapatma Tuşu
-local ToggleIcon = Instance.new("TextButton", ScreenGui)
-ToggleIcon.Size = UDim2.new(0, 50, 0, 50)
-ToggleIcon.Position = UDim2.new(0, 10, 0.5, -25)
-ToggleIcon.BackgroundColor3 = Color3.fromRGB(0, 255, 170)
-ToggleIcon.Text = "RE"
-ToggleIcon.TextColor3 = Color3.new(0, 0, 0)
-ToggleIcon.Font = Enum.Font.GothamBlack
-ToggleIcon.TextSize = 18
-Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(1, 0)
+		local re = ReplicatedStorage:FindFirstChild("RE")
+		local trigger = re and re:FindFirstChild("1Playe1rTrigge1rEven1t")
 
-ToggleIcon.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-end)
+		if not trigger then return end
 
-print("XenoHub V4 RE-Admin: Yüklendi! (RE Folder: " .. (RE and "Bulundu" or "Bulunamadı") .. ")")
+		for _, itemName in ipairs(possibleNames) do
+			local args = {
+				[1] = "AcceptedToolToServer",
+				[2] = itemName,
+				[3] = LocalPlayer
+			}
+
+			pcall(function()
+				trigger:FireServer(unpack(args))
+			end)
+		end
+	end
+})
+
+Tab:AddButton({
+	Title = "🧪 Green Crystal",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "UraniumRod",
+			[3] = game:GetService("Players").LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+	end
+})
+
+Tab:AddButton({
+	Title = "🪚 Chainsaw",
+	Callback = function()
+		local args = {
+			[1] = "AcceptedToolToServer",
+			[2] = "Chainsaw",
+			[3] = game:GetService("Players").LocalPlayer
+		}
+		game:GetService("ReplicatedStorage").RE:FindFirstChild("1Playe1rTrigge1rEven1t"):FireServer(unpack(args))
+	end
+})
+
+Tab:AddButton({
+	Title = "🧠 Telekinesis V5",
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))()
+	end
+})
+
+OrionLib:Init()
