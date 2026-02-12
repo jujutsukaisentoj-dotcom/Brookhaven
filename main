@@ -1,8 +1,7 @@
 --[[
-    XENOHUB: BLACK EDITION (ULTIMATE REMASTERED)
-    - Source: Integrated from Advanced Brookhaven Decompiles
-    - Compatibility: PC, Mobile, Tablet
-    - Features: Full Gamepass Bypass, Advanced Tool Spawner, Visual Mods
+    XENOHUB: BLACK EDITION (CARTOLA STYLE REMASTERED)
+    - Tasarım: Cartola Hub Estetiği (Neon & Glassmorphism)
+    - Özellikler: Full Gamepass Bypass, Gelişmiş UI, Otomatik Fonksiyonlar
 ]]
 
 local Players = game:GetService("Players")
@@ -13,19 +12,19 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
-local mouse = player:GetMouse()
 
--- Renk Paleti (Xeno/Cartola Mix)
+-- Cartola Tarzı Neon Tema
 local Theme = {
-    Main = Color3.fromRGB(145, 90, 230), -- Ana Mor
-    Dark = Color3.fromRGB(12, 12, 12),   -- Arkaplan
-    Surface = Color3.fromRGB(18, 18, 18),-- Panel
+    Main = Color3.fromRGB(145, 90, 230),      -- Cartola Moru
+    Accent = Color3.fromRGB(180, 130, 255),   -- Parlama Rengi
+    Dark = Color3.fromRGB(10, 10, 12),        -- Derin Siyah
+    Sidebar = Color3.fromRGB(15, 15, 18),     -- Yan Menü
     Text = Color3.fromRGB(255, 255, 255),
-    Accent = Color3.fromRGB(110, 70, 190)
+    DimText = Color3.fromRGB(180, 180, 180)
 }
 
 -- ==============================================================================
--- 1. PROFESYONEL YÜKLEME EKRANI (main (24).txt tabanlı)
+-- 1. CARTOLA TARZI YÜKLEME EKRANI
 -- ==============================================================================
 local function ShowLoading()
     local ScreenGui = Instance.new("ScreenGui")
@@ -38,86 +37,210 @@ local function ShowLoading()
     Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Frame.Parent = ScreenGui
 
-    local Gradient = Instance.new("UIGradient")
-    Gradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Theme.Main),
-        ColorSequenceKeypoint.new(0.5, Theme.Accent),
-        ColorSequenceKeypoint.new(1, Theme.Main)
-    }
-    Gradient.Rotation = 90
-    Gradient.Parent = Frame
-
     local Logo = Instance.new("TextLabel")
-    Logo.Size = UDim2.new(0, 300, 0, 50)
-    Logo.Position = UDim2.new(0.5, -150, 0.5, -25)
+    Logo.Size = UDim2.new(0, 400, 0, 100)
+    Logo.Position = UDim2.new(0.5, -200, 0.5, -50)
     Logo.BackgroundTransparency = 1
-    Logo.Text = "XENOHUB BLACK"
+    Logo.Text = "XENOHUB"
     Logo.Font = Enum.Font.GothamBold
-    Logo.TextSize = 40
-    Logo.TextColor3 = Theme.Text
+    Logo.TextSize = 60
+    Logo.TextColor3 = Theme.Main
     Logo.Parent = Frame
+    
+    local Sub = Instance.new("TextLabel")
+    Sub.Size = UDim2.new(0, 400, 0, 30)
+    Sub.Position = UDim2.new(0.5, -200, 0.5, 40)
+    Sub.BackgroundTransparency = 1
+    Sub.Text = "BLACK EDITION | CARTOLA STYLE"
+    Sub.Font = Enum.Font.GothamMedium
+    Sub.TextSize = 14
+    Sub.TextColor3 = Theme.Accent
+    Sub.TextTransparency = 1
+    Sub.Parent = Frame
 
     -- Animasyonlar
-    TweenService:Create(Frame, TweenInfo.new(1.5), {BackgroundTransparency = 1}):Play()
-    task.wait(2)
+    TweenService:Create(Sub, TweenInfo.new(1), {TextTransparency = 0}):Play()
+    task.wait(2.5)
+    TweenService:Create(Frame, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(Logo, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+    TweenService:Create(Sub, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+    task.wait(1)
     ScreenGui:Destroy()
 end
 
 task.spawn(ShowLoading)
 
 -- ==============================================================================
--- 2. ANA BYPASS SİSTEMİ (Dosyalardan Gelen Mantık)
+-- 2. ANA BYPASS SİSTEMİ
 -- ==============================================================================
 local function ApplyBypasses()
     pcall(function()
-        -- Reklam ve Süre Bypass (ExtendUnlockController.txt tabanlı)
+        -- Gamepass ve Reklam Bypass (Dosya mantığıyla entegre)
         local Ads = require(ReplicatedStorage.Modules.Client.Ads.AdvertisementsController)
-        Ads.GetUnlockedDuration = function() return 999999 end
+        Ads.GetUnlockedDuration = function() return 9e9 end
         
-        -- Gamepass Kilitlerini Kaldır (GamepassUnlockController.txt tabanlı)
         local GP = require(ReplicatedStorage.Modules.Client.UI.Gamepass.GamepassController)
         GP.IsUnlocked = function() return true end
         
-        -- Panel Engellerini Kaldır
         local ShowGP = require(ReplicatedStorage.Modules.Client.UI.GamepassUnlockController)
-        ShowGP.Show = function() return end -- Satın alma uyarısını kapat
+        ShowGP.Show = function() return end
     end)
 end
 
 ApplyBypasses()
 
 -- ==============================================================================
--- 3. MODERN UI FRAMEWORK
+-- 3. CARTOLA UI FRAMEWORK (Görsel Kalite)
 -- ==============================================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "XenoHub_Black"
+ScreenGui.Name = "XenoHub_Cartola"
 ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = CoreGui end)
 
--- Mobil mi PC mi kontrolü
-local isMobile = UserInputService.TouchEnabled
-local UIWidth = isMobile and 500 or 650
-local UIHeight = isMobile and 300 or 400
-
 local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, UIWidth, 0, UIHeight)
-Main.Position = UDim2.new(0.5, -UIWidth/2, 0.5, -UIHeight/2)
+Main.Size = UDim2.new(0, 600, 0, 380)
+Main.Position = UDim2.new(0.5, -300, 0.5, -190)
 Main.BackgroundColor3 = Theme.Dark
 Main.BorderSizePixel = 0
 Main.Parent = ScreenGui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
--- Menü Açma Butonu (Logo)
-local LogoBtn = Instance.new("ImageButton")
-LogoBtn.Size = UDim2.new(0, 50, 0, 50)
-LogoBtn.Position = UDim2.new(0.02, 0, 0.02, 0)
-LogoBtn.BackgroundColor3 = Theme.Surface
-LogoBtn.Image = "rbxassetid://13440020165" -- Xeno Logo ID
-LogoBtn.Parent = ScreenGui
-Instance.new("UICorner", LogoBtn).CornerRadius = UDim.new(1, 0)
-LogoBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+-- Glow Efekti (Neon Kenarlık)
+local Stroke = Instance.new("UIStroke")
+Stroke.Thickness = 1.5
+Stroke.Color = Theme.Main
+Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+Stroke.Parent = Main
 
--- Sürükleme Mantığı
+-- Yan Menü (Sidebar)
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 160, 1, 0)
+Sidebar.BackgroundColor3 = Theme.Sidebar
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = Main
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
+
+local SidebarList = Instance.new("UIListLayout")
+SidebarList.Padding = UDim.new(0, 5)
+SidebarList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+SidebarList.Parent = Sidebar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 60)
+Title.Text = "XENOHUB"
+Title.TextColor3 = Theme.Main
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 22
+Title.BackgroundTransparency = 1
+Title.Parent = Sidebar
+
+-- İçerik Alanı
+local Container = Instance.new("ScrollingFrame")
+Container.Size = UDim2.new(1, -180, 1, -20)
+Container.Position = UDim2.new(0, 170, 0, 10)
+Container.BackgroundTransparency = 1
+Container.ScrollBarThickness = 2
+Container.ScrollBarImageColor3 = Theme.Main
+Container.Parent = Main
+
+local ContainerList = Instance.new("UIListLayout")
+ContainerList.Padding = UDim.new(0, 8)
+ContainerList.Parent = Container
+
+-- Buton Oluşturma Fonksiyonu
+local function AddButton(name, desc, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, -10, 0, 50)
+    Btn.BackgroundColor3 = Color3.fromRGB(20, 20, 23)
+    Btn.Text = ""
+    Btn.AutoButtonColor = false
+    Btn.Parent = Container
+    local Corner = Instance.new("UICorner", Btn)
+    Corner.CornerRadius = UDim.new(0, 8)
+
+    local BTitle = Instance.new("TextLabel")
+    BTitle.Size = UDim2.new(1, -10, 0, 30)
+    BTitle.Position = UDim2.new(0, 10, 0, 5)
+    BTitle.Text = name
+    BTitle.TextColor3 = Theme.Text
+    BTitle.Font = Enum.Font.GothamMedium
+    BTitle.TextSize = 14
+    BTitle.TextXAlignment = Enum.TextXAlignment.Left
+    BTitle.BackgroundTransparency = 1
+    BTitle.Parent = Btn
+
+    local BDesc = Instance.new("TextLabel")
+    BDesc.Size = UDim2.new(1, -10, 0, 20)
+    BDesc.Position = UDim2.new(0, 10, 0, 25)
+    BDesc.Text = desc
+    BDesc.TextColor3 = Theme.DimText
+    BDesc.Font = Enum.Font.Gotham
+    BDesc.TextSize = 10
+    BDesc.TextXAlignment = Enum.TextXAlignment.Left
+    BDesc.BackgroundTransparency = 1
+    BDesc.Parent = Btn
+
+    Btn.MouseButton1Click:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Main}):Play()
+        task.wait(0.1)
+        TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20, 20, 23)}):Play()
+        callback()
+    end)
+end
+
+-- ==============================================================================
+-- 4. ÖZELLİKLER (CARTOLA MOD)
+-- ==============================================================================
+
+AddButton("🌟 Cartola Bypass", "Tüm Premium ve Gamepass kilitlerini tek tıkla aşar.", function()
+    ApplyBypasses()
+    game.StarterGui:SetCore("SendNotification", {Title = "XenoHub", Text = "Premium Mod Aktif!"})
+end)
+
+AddButton("🏠 Ev Manipülatörü", "Haritadaki tüm evlerin kilitlerini açar ve erişim verir.", function()
+    pcall(function()
+        local Lot = require(ReplicatedStorage.Modules.Client.Lot.LotController)
+        Lot.IsHouseUnlocked = function() return true end
+        Lot.GetLotData = function(s, id) 
+            local d = s.GetLotData(s, id)
+            if d then d.isLocked = false end
+            return d
+        end
+    end)
+end)
+
+AddButton("💸 Para Tabancası", "Etrafa para saçan özel eşyayı envanterine ekler.", function()
+    local r = ReplicatedStorage:FindFirstChild("RE")
+    if r then r["1Playe1rTrigge1rEven1t"]:FireServer("AcceptedToolToServer", "MoneyGun", player) end
+end)
+
+AddButton("🏎️ Nitro Boost", "Bindiğin araca sınırsız hız ve tork ekler.", function()
+    task.spawn(function()
+        while task.wait(0.5) do
+            local car = workspace.Vehicles:FindFirstChild(player.Name .. "Car")
+            if car then
+                local seat = car:FindFirstChildOfClass("VehicleSeat")
+                if seat then seat.MaxSpeed = 300 seat.Torque = 50000 end
+            end
+        end
+    end)
+end)
+
+AddButton("🌈 Neon Araba", "Arabanın rengini RGB döngüsüne sokar.", function()
+    _G.RGB = not _G.RGB
+    while _G.RGB do
+        pcall(function()
+            ReplicatedStorage.RE["1Player1sCa1r"]:FireServer("PickingCarColor", Color3.fromHSV(tick()%5/5, 1, 1))
+        end)
+        task.wait(0.1)
+    end
+end)
+
+AddButton("🛡️ Ghost Mode", "Diğer oyunculara görünmez olmanı sağlar.", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/TROLLLINUXKKK/Fe-invis-vel-/refs/heads/main/Main.txt"))()
+end)
+
+-- Sürükleme ve Aç/Kapat
 local function Drag(obj)
     local dragging, dragInput, dragStart, startPos
     obj.InputBegan:Connect(function(input)
@@ -135,93 +258,10 @@ local function Drag(obj)
 end
 Drag(Main)
 
--- Yan Menü
-local Sidebar = Instance.new("Frame")
-Sidebar.Size = UDim2.new(0, 150, 1, 0)
-Sidebar.BackgroundColor3 = Theme.Surface
-Sidebar.Parent = Main
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 12)
-
-local Content = Instance.new("ScrollingFrame")
-Content.Size = UDim2.new(1, -160, 1, -20)
-Content.Position = UDim2.new(0, 155, 0, 10)
-Content.BackgroundTransparency = 1
-Content.ScrollBarThickness = 2
-Content.Parent = Main
-local List = Instance.new("UIListLayout")
-List.Padding = UDim.new(0, 10)
-List.Parent = Content
-
--- ==============================================================================
--- 4. FONKSİYONLAR VE BUTONLAR
--- ==============================================================================
-local function AddButton(text, desc, callback)
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(1, -10, 0, 45)
-    Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    Btn.Text = "  " .. text
-    Btn.TextColor3 = Theme.Text
-    Btn.Font = Enum.Font.GothamMedium
-    Btn.TextSize = 14
-    Btn.TextXAlignment = Enum.TextXAlignment.Left
-    Btn.Parent = Content
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-
-    local D = Instance.new("TextLabel")
-    D.Text = desc
-    D.Size = UDim2.new(1, -10, 0, 15)
-    D.Position = UDim2.new(0, 5, 0.7, 0)
-    D.BackgroundTransparency = 1
-    D.TextColor3 = Color3.fromRGB(150, 150, 150)
-    D.TextSize = 10
-    D.TextXAlignment = Enum.TextXAlignment.Left
-    D.Parent = Btn
-
-    Btn.MouseButton1Click:Connect(callback)
-end
-
--- ÖZELLİKLER
-AddButton("🔓 Full Unlock", "Tüm evleri ve kilitleri açar", function()
-    ApplyBypasses()
-    game.StarterGui:SetCore("SendNotification", {Title = "XenoHub", Text = "Tüm Brookhaven Kilitleri Kaldırıldı!"})
-end)
-
-AddButton("💸 Money Gun Spawner", "Para tabancası verir (FE)", function()
-    local r = ReplicatedStorage:FindFirstChild("RE")
-    if r then r["1Playe1rTrigge1rEven1t"]:FireServer("AcceptedToolToServer", "MoneyGun", player) end
-end)
-
-AddButton("🏠 All Houses Access", "Ev seçim panelindeki kısıtlamaları kaldırır", function()
-    pcall(function()
-        local Lot = require(ReplicatedStorage.Modules.Client.Lot.LotController)
-        Lot.IsHouseUnlocked = function() return true end
-    end)
-end)
-
-AddButton("🚀 Super Speed Car", "Arabayı aşırı hızlandırır (FE)", function()
-    task.spawn(function()
-        while task.wait(0.5) do
-            local car = workspace.Vehicles:FindFirstChild(player.Name .. "Car")
-            if car then
-                local seat = car:FindFirstChildOfClass("VehicleSeat")
-                if seat then seat.MaxSpeed = 250 seat.Torque = 20000 end
-            end
-        end
-    end)
-end)
-
-AddButton("🌈 Rainbow Car", "Arabayı sürekli renk değiştirir", function()
-    _G.Rainbow = not _G.Rainbow
-    while _G.Rainbow do
-        pcall(function()
-            ReplicatedStorage.RE["1Player1sCa1r"]:FireServer("PickingCarColor", Color3.fromHSV(tick()%5/5, 1, 1))
-        end)
-        task.wait(0.1)
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.RightControl then
+        Main.Visible = not Main.Visible
     end
 end)
 
-AddButton("🛡️ Anti-Ban & Ghost", "Görünmezlik ve koruma modunu açar", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/TROLLLINUXKKK/Fe-invis-vel-/refs/heads/main/Main.txt"))()
-end)
-
-print("XenoHub Black Edition Başarıyla Yüklendi!")
+print("XenoHub: Black Edition (Cartola Style) Yüklendi! Kapatmak için 'RightControl' kullanın.")
