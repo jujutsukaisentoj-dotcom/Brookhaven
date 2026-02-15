@@ -1,126 +1,115 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDZHUB/RedzLibV2/main/source.lua"))()
 
-local Window = Rayfield:CreateWindow({
-   Name = "Brookhaven PRO HUB | Gemini",
-   LoadingTitle = "Pro Modül Yükleniyor...",
-   LoadingSubtitle = "Hızlı Tetikleme Aktif",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "BrookhavenPro",
-      FileName = "Manager"
-   },
-   KeySystem = false, -- Direkt açılması için şifreyi kaldırdım
+local Window = RedzLib:MakeWindow({
+  Title = "Brookhaven: Redz PRO",
+  SubTitle = "Hazırlayan: Gemini",
+  SaveFolder = "RedzBrookhaven.json"
 })
 
--- 1. SEKME: OYUNCU (GOD MODE AYARLARI)
-local MainTab = Window:CreateTab("Oyuncu & Fizik", 4483362458)
+-- 1. SEKME: OYUNCU (Hareket & Fizik)
+local MainTab = Window:MakeTab("Oyuncu", "user")
 
-local Section = MainTab:CreateSection("Hareket")
+MainTab:AddSection("Fiziksel Güçler")
 
-MainTab:CreateSlider({
-   Name = "Koşu Hızı (WalkSpeed)",
-   Range = {16, 350},
-   Increment = 1,
-   Suffix = "Hız",
-   CurrentValue = 16,
-   Flag = "Speed", 
-   Callback = function(Value)
-      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-   end,
+MainTab:AddSlider({
+  Name = "Koşu Hızı (Speed)",
+  Min = 16,
+  Max = 350,
+  Default = 16,
+  Callback = function(Value)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+  end
 })
 
-MainTab:CreateSlider({
-   Name = "Zıplama (JumpPower)",
-   Range = {50, 400},
-   Increment = 1,
-   Suffix = "Güç",
-   CurrentValue = 50,
-   Flag = "Jump", 
-   Callback = function(Value)
-      game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-   end,
+MainTab:AddSlider({
+  Name = "Zıplama (Jump)",
+  Min = 50,
+  Max = 400,
+  Default = 50,
+  Callback = function(Value)
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+    game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+  end
 })
 
 -- NOCLIP (DUVARLARDAN GEÇME)
-local NoclipLoop
-MainTab:CreateToggle({
-   Name = "Noclip (Duvarlardan Geç)",
-   CurrentValue = false,
-   Flag = "Noclip", 
-   Callback = function(Value)
-      if Value then
-         NoclipLoop = game:GetService("RunService").Stepped:Connect(function()
-            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-               if part:IsA("BasePart") then
-                  part.CanCollide = false
-               end
+-- Evleri soyarken kapalı kapılardan geçmek için bunu aç!
+local Noclip = false
+game:GetService("RunService").Stepped:Connect(function()
+    if Noclip then
+        for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
             end
-         end)
-      else
-         if NoclipLoop then NoclipLoop:Disconnect() end
-      end
-   end,
+        end
+    end
+end)
+
+MainTab:AddToggle({
+  Name = "Noclip (Duvarlardan Geç)",
+  Default = false,
+  Callback = function(Value)
+    Noclip = Value
+  end
 })
 
--- 2. SEKME: IŞINLANMA (PRO LOCATIONS)
-local TPTab = Window:CreateTab("Işınlanma", 4483362458)
+-- 2. SEKME: IŞINLANMA (Soygun Noktaları)
+local TeleportTab = Window:MakeTab("Işınlanma", "map")
 
-TPTab:CreateSection("Önemli Yerler")
+TeleportTab:AddSection("Önemli Yerler")
 
-TPTab:CreateButton({
-   Name = "Banka Kasası (Safe)",
-   Callback = function()
-      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
-   end,
+TeleportTab:AddButton({
+  Name = "Banka Kasası (Direkt İçeri)",
+  Callback = function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
+  end
 })
 
-TPTab:CreateButton({
-   Name = "Gizli Üs (Elektrik Odası)",
-   Callback = function()
-      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-388, 18, 552) -- Örnek koordinat
-   end,
+TeleportTab:AddButton({
+  Name = "Gizli Ajan Üssü",
+  Callback = function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-387, 18, 552)
+  end
 })
 
-TPTab:CreateButton({
-   Name = "Havalimanı / Uçak",
-   Callback = function()
-      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-655, 30, 203) 
-   end,
+TeleportTab:AddButton({
+  Name = "Spawn (Başlangıç)",
+  Callback = function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0)
+  end
 })
 
--- 3. SEKME: ESP (GÖRÜŞ HİLESİ)
-local VisualTab = Window:CreateTab("Görüş (ESP)", 4483362458)
+-- 3. SEKME: GÖRÜŞ (ESP)
+local VisualTab = Window:MakeTab("Görüş", "eye")
 
-VisualTab:CreateButton({
-   Name = "Oyuncu ESP'sini Aç",
-   Callback = function()
-      for _, player in pairs(game.Players:GetPlayers()) do
-         if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+VisualTab:AddSection("Oyuncu İzleme")
+
+VisualTab:AddButton({
+  Name = "ESP Aç (Oyuncuları Gör)",
+  Callback = function()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character then
             local highlight = Instance.new("Highlight")
             highlight.Parent = player.Character
-            highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Kırmızı renk
+            highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Kırmızı yanarlar
             highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-         end
-      end
-      Rayfield:Notify({Title = "ESP Aktif", Content = "Diğer oyuncular kırmızı işaretlendi.", Duration = 3})
-   end,
+        end
+    end
+  end
 })
 
--- 4. SEKME: ARAÇ
-local CarTab = Window:CreateTab("Araç", 4483362458)
+-- 4. SEKME: TROLL & EĞLENCE
+local FunTab = Window:MakeTab("Eğlence", "star")
 
-CarTab:CreateButton({
-   Name = "Tüm Araçların Hızını Artır",
-   Callback = function()
-       -- Basit araç hızlandırma mantığı
-      Rayfield:Notify({Title = "Araç Modu", Content = "Araca bindiğinde hız artacak.", Duration = 3})
-   end,
+FunTab:AddButton({
+  Name = "Uçma Modu (Basit)",
+  Callback = function()
+    local BV = Instance.new("BodyVelocity")
+    BV.Parent = game.Players.LocalPlayer.Character.HumanoidRootPart
+    BV.Velocity = Vector3.new(0, 50, 0) -- Havaya fırlatır
+    wait(1)
+    BV:Destroy()
+  end
 })
 
--- Başlatma Bildirimi
-Rayfield:Notify({
-   Title = "Pro Mod Aktif!",
-   Content = "Tüm özellikler yüklendi. Noclip ile evlere girebilirsin.",
-   Duration = 5,
-   Image = 4483362458,
-})
+RedzLib:SetNotify("Pro Mod Aktif", "Redz Hub başarıyla yüklendi!", 3)
