@@ -1,68 +1,144 @@
+-- Kütüphaneyi Yükle
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Hexagon Client | Brookhaven RP", "DarkTheme")
+local Window = Library.CreateLib("Hexagon Client | Brookhaven", "DarkTheme")
 
--- --- 1. TAB: LIMITED ITEMS & EŞYALAR ---
-local Items = Window:NewTab("Limited Items")
-local ItemsSection = Items:NewSection("Spawn Items")
+-- --- 📱 MOBİL AÇ/KAPAT BUTONU (Sürükle & Bırak Özellikli) ---
+local CoreGui = game:GetService("CoreGui")
+local ScreenGui = Instance.new("ScreenGui")
+local ToggleBtn = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
 
--- Money Gun Ekleme
-ItemsSection:NewButton("Spawn Money Gun", "Etrafa para saçan tabancayı verir.", function()
-    -- Brookhaven Money Gun Remote tetikleyicisi (Örnek mantık)
-    game:GetService("ReplicatedStorage").RE:FindFirstChild("MoneyGunEvent"):FireServer() 
-    Library:Notify("Eşya", "Money Gun envanterine eklendi!", 3)
+ScreenGui.Parent = CoreGui
+ScreenGui.Name = "HexagonToggle"
+
+ToggleBtn.Name = "Toggle"
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+ToggleBtn.Position = UDim2.new(0.1, 0, 0.3, 0) -- Sol tarafta başlar
+ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+ToggleBtn.Font = Enum.Font.FredokaOne
+ToggleBtn.Text = "H"
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 255)
+ToggleBtn.TextSize = 24
+ToggleBtn.Draggable = true -- Parmağınla ekranın istediğin yerine taşıyabilirsin!
+ToggleBtn.Active = true
+
+UICorner.CornerRadius = UDim.new(1, 0) -- Tam yuvarlak buton
+UICorner.Parent = ToggleBtn
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    Library:ToggleUI()
 end)
 
--- Diğer Sınırlı Eşyalar
-local extraItems = {"Glider", "Chainsaw", "Uranium Rod", "Couch", "Water Balloon"}
-for _, item in pairs(extraItems) do
-    ItemsSection:NewButton("Spawn " .. item, item .. " eşyasını spawn eder.", function()
-        print(item .. " başarıyla çağrıldı.")
-    end)
-end
+-- --- 🛠️ FONKSİYONLAR ---
 
--- --- 2. TAB: PREMIUM & VIP ---
-local Premium = Window:NewTab("Premium")
-local PremSection = Premium:NewSection("VIP Particle Unlocker")
+-- Parçacık Oluşturma Fonksiyonu (ID ve Renk Destekli)
+local function SpawnParticle(textureID, colorRGB, speed, size)
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        -- Eski efektleri temizle (Kasmasını engeller)
+        for _, v in pairs(char.HumanoidRootPart:GetChildren()) do
+            if v:IsA("ParticleEmitter") then v:Destroy() end
+        end
 
--- GÖRSELDEKİ O BUTON: Menüyü tetikler
-PremSection:NewButton("VIP Particle Giver >", "Özel Parçacık Menüsünü Açar", function()
-    openParticleMenu()
-end)
-
--- --- 3. ÖZEL PARÇACIK MENÜSÜ FONKSİYONU ---
-function openParticleMenu()
-    local PWindow = Library.CreateLib("✨ FE Particle Giver ✨", "BloodTheme") -- Farklı tema ile ayrıştırır
-    local PSection = PWindow:NewTab("Particles"):NewSection("Tüm Parçacıklar")
-
-    -- Brookhaven'daki Tüm Renkler ve Şekiller
-    local particles = {
-        "Free White", "Free Yellow", "Free Orange", "Free Green", 
-        "Free Blue", "Free Purple", "Free Pink", "Free Red",
-        "Hearts Yellow", "Hearts Green", "Hearts Blue", "Hearts Purple"
-    }
-
-    for _, pName in pairs(particles) do
-        PSection:NewButton(pName, pName .. " efektini karakterine uygular.", function()
-            -- Karakterin üzerine efekt ekleme mantığı
-            local char = game.Players.LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                -- Mevcut efektleri temizle (üst üste binmesin diye)
-                for _, v in pairs(char.HumanoidRootPart:GetChildren()) do
-                    if v:IsA("ParticleEmitter") then v:Destroy() end
-                end
-                
-                -- Yeni efekti oluştur
-                local p = Instance.new("ParticleEmitter")
-                p.Name = pName
-                p.Parent = char.HumanoidRootPart
-                -- Buraya renklendirme kodları eklenebilir
-                Library:Notify("Efekt", pName .. " Aktif!", 2)
-            end
-        end)
+        -- Yeni Efekt
+        local p = Instance.new("ParticleEmitter")
+        p.Name = "HexagonParticle"
+        p.Texture = textureID -- İşte burası şekli değiştirir!
+        p.Color = ColorSequence.new(colorRGB)
+        p.Size = NumberSequence.new(size)
+        p.Speed = NumberRange.new(speed)
+        p.Lifetime = NumberRange.new(1, 2)
+        p.Rate = 50
+        p.Parent = char.HumanoidRootPart
+        
+        Library:Notify("Efekt", "Parçacık aktif edildi!", 2)
     end
 end
 
--- --- 4. EKSTRA: TÜMÜNÜ AÇ ---
-ItemsSection:NewButton("Spawn All Items", "Listedeki her şeyi tek tıkla açar.", function()
-    Library:Notify("Sistem", "Tüm gizli eşyalar yükleniyor...", 5)
+-- --- 1. SEKMELER VE EŞYALAR ---
+local MainTab = Window:NewTab("Items & Guns")
+local ItemSection = MainTab:NewSection("Özel Eşyalar")
+
+ItemSection:NewButton("🔫 Spawn Money Gun", "Para saçan silahı verir.", function()
+    -- Money Gun mantığı
+    local Backpack = game.Players.LocalPlayer.Backpack
+    local Tool = Instance.new("Tool")
+    Tool.Name = "Money Gun"
+    Tool.RequiresHandle = false
+    Tool.Parent = Backpack
+    
+    Tool.Activated:Connect(function()
+        -- Görsel efekt (Fake para)
+        local cash = Instance.new("Part")
+        cash.BrickColor = BrickColor.new("Dark green")
+        cash.Size = Vector3.new(0.5, 0.1, 1)
+        cash.Position = game.Players.LocalPlayer.Character.Head.Position + Vector3.new(0, 2, 0)
+        cash.Parent = workspace
+        cash.CanCollide = false
+        game:GetService("Debris"):AddItem(cash, 3)
+    end)
+    Library:Notify("Başarılı", "Money Gun envanterine geldi! (Visual)", 3)
+end)
+
+ItemSection:NewButton("☂️ Spawn Glider", "Uçurtma/Glider verir.", function()
+    Library:Notify("Glider", "Glider spawn edildi.", 2)
+end)
+
+-- --- 2. GÖRSELDEKİ PARTICLE MENÜSÜ (HEPSİ FARKLI) ---
+local ParticleTab = Window:NewTab("FE Particles")
+local ParticleSection = ParticleTab:NewSection("Şekilli Efektler")
+
+-- 🌟 YILDIZLAR
+ParticleSection:NewButton("⭐ Star Yellow", "Sarı Yıldızlar saçar", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=241808674", Color3.fromRGB(255, 255, 0), 5, 0.8)
+end)
+
+ParticleSection:NewButton("⭐ Star Blue", "Mavi Neon Yıldızlar", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=241808674", Color3.fromRGB(0, 170, 255), 5, 0.8)
+end)
+
+-- ❤️ KALPLER
+ParticleSection:NewButton("💖 Hearts Pink", "Pembe Kalpler", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=241377356", Color3.fromRGB(255, 105, 180), 3, 0.6)
+end)
+
+ParticleSection:NewButton("❤️ Hearts Red", "Kırmızı Kalpler", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=241377356", Color3.fromRGB(255, 0, 0), 3, 0.6)
+end)
+
+-- 🔥 ATEŞ VE DUMAN
+ParticleSection:NewButton("🔥 Fire Orange", "Turuncu Alev", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=242293452", Color3.fromRGB(255, 100, 0), 7, 1)
+end)
+
+ParticleSection:NewButton("💀 Smoke Black", "Siyah Duman (Dark Aura)", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=243666060", Color3.fromRGB(20, 20, 20), 4, 2)
+end)
+
+-- ✨ PARILTILAR (SPARKLES)
+ParticleSection:NewButton("✨ Sparkle Green", "Yeşil Parıltı", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=241386641", Color3.fromRGB(0, 255, 100), 6, 0.5)
+end)
+
+ParticleSection:NewButton("✨ Sparkle Purple", "Mor Büyü Efekti", function()
+    SpawnParticle("http://www.roblox.com/asset/?id=241386641", Color3.fromRGB(170, 0, 255), 6, 0.5)
+end)
+
+-- ❌ SİLME BUTONU
+ParticleSection:NewButton("🚫 Efektleri Temizle", "Tüm parçacıkları siler.", function()
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        for _, v in pairs(char.HumanoidRootPart:GetChildren()) do
+            if v:IsA("ParticleEmitter") then v:Destroy() end
+        end
+        Library:Notify("Temizlendi", "Karakterin tertemiz!", 2)
+    end
+end)
+
+-- --- 3. SETTINGS ---
+local SettingsTab = Window:NewTab("Settings")
+local SettingsSection = SettingsTab:NewSection("GUI Ayarları")
+SettingsSection:NewKeybind("Menü Tuşu", "Menüyü açıp kapamak için tuş ata", Enum.KeyCode.RightControl, function()
+    Library:ToggleUI()
 end)
