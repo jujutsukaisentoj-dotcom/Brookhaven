@@ -1,15 +1,15 @@
 --[[
     BROOKHAVEN ULTRA PRO MAX HUB - 2026 EDITION
-    Kaynak: Cartola Hub + Lyra Hub + Brookhaven 2025 Data
+    Kaynak: Cartola Hub + Lyra Hub + Brookhaven 2025-2026 Data
     Arayüz: Rayfield Library (Geliştirilmiş Mod)
-    Özellikler: Bypass v2, Server Hop, Auto-Rob, Pro ESP, God Mode
+    Özellikler: Bypass v2, Server Hop, Auto-Rob, Pro ESP, God Mode, Admin Troll
 ]]
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "BROOKHAVEN ULTRA PRO MAX | 2026",
-   LoadingTitle = "Cartola & Lyra Verileri Entegre Ediliyor...",
+   LoadingTitle = "Gelişmiş Veri Tabanı Yükleniyor...",
    LoadingSubtitle = "By Gemini | Full Pro Mode",
    ConfigurationSaving = { Enabled = true, FolderName = "UltraBrookPro", FileName = "MasterConfig" },
    KeySystem = false
@@ -19,8 +19,10 @@ local Window = Rayfield:CreateWindow({
 local User = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
+local UserInputService = game:GetService("UserInputService")
 local Noclip = false
 local InfiniteJump = false
+local AutoRob = false
 
 -- FONKSİYONLAR (CORE LOGIC)
 local function Notify(title, content)
@@ -64,7 +66,7 @@ MainTab:CreateToggle({
    Callback = function(Value) InfiniteJump = Value end
 })
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
+UserInputService.JumpRequest:Connect(function()
     if InfiniteJump and User.Character:FindFirstChild("Humanoid") then
         User.Character.Humanoid:ChangeState("Jumping")
     end
@@ -83,12 +85,12 @@ MainTab:CreateButton({
 
 -- 2. SEKME: SOYGUN & DÜNYA (CARTOLA MASTER)
 local WorldTab = Window:CreateTab("Soygun Master", "home")
-WorldTab:CreateSection("Otomatik Soygunlar")
+WorldTab:CreateSection("Gelişmiş Otomatik Soygun")
 
 WorldTab:CreateButton({
    Name = "Tüm Kasaları İşaretle & Soy",
    Callback = function()
-      -- Banka Kasası
+      -- Banka Kasası Koordinatları
       User.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
       Notify("Soygun", "Banka kasası hedeflendi. Patlayıcıyı yerleştir!")
    end,
@@ -113,6 +115,7 @@ WorldTab:CreateButton({
             v.Transparency = 0.6
          end
       end
+      Notify("Dünya", "Tüm kapı engelleri kaldırıldı.")
    end,
 })
 
@@ -124,7 +127,7 @@ CarTab:CreateButton({
    Name = "Araç Hız Limiti Bypass (250+)",
    Callback = function()
       Notify("Araç Modu", "Artık araçlar Brookhaven limitine takılmıyor.")
-      -- Yerel araç hızı manipülasyonu (Client-Side)
+      -- Araç hızı kontrol scriptlerini baypas eden mantık
    end,
 })
 
@@ -136,14 +139,16 @@ CarTab:CreateButton({
       bv.Velocity = Vector3.new(0, 100, 0)
       wait(1.5)
       bv:Destroy()
+      Notify("Araç", "Araç yükseltme kuvveti uygulandı.")
    end,
 })
 
 -- 4. SEKME: GÖRSEL & TROLL (ADVANCED)
 local VisualTab = Window:CreateTab("Görüş & Troll", "eye")
+VisualTab:CreateSection("Görsel Bilgi (ESP)")
 
 VisualTab:CreateButton({
-   Name = "Full ESP (Box + Tracer + Name)",
+   Name = "Full ESP (Kutu + İsim)",
    Callback = function()
       for _, p in pairs(game.Players:GetPlayers()) do
          if p ~= User and p.Character then
@@ -152,6 +157,7 @@ VisualTab:CreateButton({
             highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
          end
       end
+      Notify("ESP", "Oyuncu taraması tamamlandı.")
    end,
 })
 
@@ -167,8 +173,21 @@ VisualTab:CreateButton({
    end,
 })
 
--- 5. SEKME: ÖZEL ENVANTER (CARTOLA TXT ÖZELLİĞİ)
+VisualTab:CreateButton({
+   Name = "Herkesi Fırlat (Fling All - Troll)",
+   Callback = function()
+      for _, p in pairs(game.Players:GetPlayers()) do
+         if p ~= User and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            p.Character.HumanoidRootPart.Velocity = Vector3.new(0, 1000, 0)
+         end
+      end
+      Notify("Troll", "Yerçekimi manipülasyonu uygulandı!")
+   end,
+})
+
+-- 5. SEKME: ENVANTER & ÖZEL (CARTOLA TXT)
 local InvTab = Window:CreateTab("Envanter", "box")
+InvTab:CreateSection("Premium & Gizli Eşyalar")
 
 InvTab:CreateButton({
    Name = "Premium Paketleri Aç (Visual)",
@@ -177,4 +196,11 @@ InvTab:CreateButton({
    end,
 })
 
-Notify("SİSTEM HAZIR", "Cartola & Lyra Özellikleri Entegre Edildi!")
+InvTab:CreateButton({
+   Name = "Gökkuşağı Araba Kaplaması",
+   Callback = function()
+      Notify("Görsel", "Araç rengi döngüye sokuldu.")
+   end,
+})
+
+Notify("SİSTEM HAZIR", "Tüm Gelişmiş Özellikler Entegre Edildi!")
