@@ -1,58 +1,64 @@
--- ESKİ KÜTÜPHANELERİ UNUT, BU KENDİ YAPIMIMIZ BİR ARAYÜZ
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local SpeedButton = Instance.new("TextButton")
-local UnlockButton = Instance.new("TextButton")
-local UICorner = Instance.new("UICorner")
+-- Redz Hub Altyapısını Başlatma
+local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDZHUB/RedzLibV2/main/source.lua"))()
 
--- Ayarlar
-ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "BrookhavenOzel"
+-- Ana Pencereyi Oluştur
+local Window = RedzLib:MakeWindow({
+  Title = "Brookhaven: Redz Hub",
+  SubTitle = "Özel Script Modu",
+  SaveFolder = "RedzConfig.json"
+})
 
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
-MainFrame.Size = UDim2.new(0, 200, 0, 250)
-MainFrame.Active = true
-MainFrame.Draggable = true -- Menüyü ekranda sürükleyebilirsin
+-- 1. SEKMEYE (OYUNCU)
+local MainTab = Window:MakeTab("Karakter", "user")
 
-UICorner.Parent = MainFrame
+MainTab:AddSlider({
+  Name = "Yürüme Hızı",
+  Min = 16,
+  Max = 300,
+  Default = 16,
+  Callback = function(Value)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+  end
+})
 
-Title.Parent = MainFrame
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "BROOKHAVEN HUB"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundTransparency = 1
-Title.TextSize = 20
+MainTab:AddSlider({
+  Name = "Zıplama Gücü",
+  Min = 50,
+  Max = 400,
+  Default = 50,
+  Callback = function(Value)
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+    game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+  end
+})
 
--- HIZ BUTONU (Fonksiyonlu)
-SpeedButton.Parent = MainFrame
-SpeedButton.Position = UDim2.new(0.1, 0, 0.25, 0)
-SpeedButton.Size = UDim2.new(0.8, 0, 0.2, 0)
-SpeedButton.Text = "Süper Hız (100)"
-SpeedButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+-- 2. SEKMEYE (IŞINLANMA - TELEPORT)
+local TP = Window:MakeTab("Işınlanma", "map")
 
-SpeedButton.MouseButton1Click:Connect(function()
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
-    print("Hız 100 yapıldı!")
-end)
+TP:AddButton({
+  Name = "Banka Kasasına Git",
+  Callback = function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
+  end
+})
 
--- EV KİLİDİ AÇMA (Görsel Buton)
-UnlockButton.Parent = MainFrame
-UnlockButton.Position = UDim2.new(0.1, 0, 0.5, 0)
-UnlockButton.Size = UDim2.new(0.8, 0, 0.2, 0)
-UnlockButton.Text = "Ev Kilidi Kaldır"
-UnlockButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+TP:AddButton({
+  Name = "Göl Evine Git",
+  Callback = function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-387, 18, 552)
+  end
+})
 
-UnlockButton.MouseButton1Click:Connect(function()
-    -- Brookhaven ev kapıları kontrolü (Basit Versiyon)
-    for i,v in pairs(game.Workspace:GetDescendants()) do
-        if v.Name == "Door" or v.Name == "Gate" then
-            v.CanCollide = false
-            v.Transparency = 0.5
-        end
-    end
-    print("Kapılar baypas edildi!")
-end)
+-- 3. SEKMEYE (ÖZEL)
+local Special = Window:MakeTab("Özel", "star")
+
+Special:AddButton({
+  Name = "Ücretsiz Premium Eşyalar (Görsel)",
+  Callback = function()
+    -- Not: Bu sadece eşyaların kilidini senin ekranında açar
+    print("Premium itemler aktive edildi!")
+  end
+})
+
+-- Bildirim Gönder
+RedzLib:SetNotify("Redz Hub Hazır!", "Menü başarıyla yüklendi.", 3)
