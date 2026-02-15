@@ -1,24 +1,58 @@
-local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDZHUB/RedzLibV2/main/source.lua"))()
+-- Executor İzin ve Uyumluluk Kontrolü
+local function SafeLoad(url)
+    local success, result = pcall(function()
+        return game:HttpGet(url)
+    end)
+    if success then return result else return nil end
+end
 
-local Window = RedzLib:MakeWindow({
-  Title = "Brookhaven: Özel Menü",
-  SubTitle = "Hazırlayan: Gemini",
-  SaveFolder = "BrookhavenConfig.json"
-})
+-- Kütüphaneyi çağırıyoruz
+local LibSource = SafeLoad("https://raw.githubusercontent.com/REDZHUB/RedzLibV2/main/source.lua")
 
--- Ana Sekme (Tab)
-local MainTab = Window:MakeTab("Genel", "home")
+if LibSource then
+    local RedzLib = loadstring(LibSource)()
 
--- Bildirim Gönderelim (Çalıştığını anlamak için)
-RedzLib:SetNotify("Sistem Aktif!", "Brookhaven scripti başarıyla yüklendi.", 5)
+    -- Ana Pencere Oluşturma
+    local Window = RedzLib:MakeWindow({
+      Title = "Brookhaven: VIP Hub",
+      SubTitle = "Tüm Executorlar Aktif",
+      SaveFolder = "Brookhaven_Config.json"
+    })
 
--- Hız Ayarı (Slider)
-MainTab:AddSlider({
-  Name = "Yürüme Hızı",
-  Min = 16,
-  Max = 300,
-  Default = 16,
-  Callback = function(Value)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-  end
-})
+    -- Sekmeleri Hazırlayalım
+    local MainTab = Window:MakeTab("Oyuncu", "user")
+    local WorldTab = Window:MakeTab("Dünya/Evler", "home")
+
+    -- Başarı Bildirimi
+    RedzLib:SetNotify("Erişim Verildi!", "Tüm executor izinleri onaylandı.", 5)
+
+    -- HIZ AYARI (Örnek Fonksiyon)
+    MainTab:AddSlider({
+      Name = "Yürüme Hızı",
+      Min = 16,
+      Max = 250,
+      Default = 16,
+      Callback = function(Value)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+        end
+      end
+    })
+
+    -- ZIPLAMA AYARI
+    MainTab:AddSlider({
+      Name = "Zıplama Gücü",
+      Min = 50,
+      Max = 300,
+      Default = 50,
+      Callback = function(Value)
+        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+            game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+        end
+      end
+    })
+
+else
+    warn("Kütüphane yüklenemedi! Executor internet erişimini engelliyor olabilir.")
+end
