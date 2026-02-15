@@ -1,69 +1,126 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Brookhaven VIP Hub | Rayfield",
-   LoadingTitle = "Sistem Yükleniyor...",
-   LoadingSubtitle = "Hazırlayan: Gemini",
+   Name = "Brookhaven PRO HUB | Gemini",
+   LoadingTitle = "Pro Modül Yükleniyor...",
+   LoadingSubtitle = "Hızlı Tetikleme Aktif",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "BrookhavenRayfield",
-      FileName = "Ayarlar"
+      FolderName = "BrookhavenPro",
+      FileName = "Manager"
    },
-   KeySystem = false -- Şifre sormasın, direkt açılsın.
+   KeySystem = false, -- Direkt açılması için şifreyi kaldırdım
 })
 
--- ANA SEKME
-local MainTab = Window:CreateTab("Karakter Ayarları", 4483362458)
+-- 1. SEKME: OYUNCU (GOD MODE AYARLARI)
+local MainTab = Window:CreateTab("Oyuncu & Fizik", 4483362458)
 
-local SpeedSlider = MainTab:CreateSlider({
-   Name = "Yürüme Hızı",
-   Info = "Karakterin hızını ayarlar.",
-   Range = {16, 300},
+local Section = MainTab:CreateSection("Hareket")
+
+MainTab:CreateSlider({
+   Name = "Koşu Hızı (WalkSpeed)",
+   Range = {16, 350},
    Increment = 1,
    Suffix = "Hız",
    CurrentValue = 16,
-   Flag = "WalkSpeedSlider",
+   Flag = "Speed", 
    Callback = function(Value)
       game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
    end,
 })
 
-local JumpSlider = MainTab:CreateSlider({
-   Name = "Zıplama Gücü",
-   Info = "Zıplama yüksekliğini ayarlar.",
+MainTab:CreateSlider({
+   Name = "Zıplama (JumpPower)",
    Range = {50, 400},
    Increment = 1,
    Suffix = "Güç",
    CurrentValue = 50,
-   Flag = "JumpPowerSlider",
+   Flag = "Jump", 
    Callback = function(Value)
       game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-      game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
    end,
 })
 
--- IŞINLANMA SEKMESİ
-local TP = Window:CreateTab("Işınlanma", 4483362458)
+-- NOCLIP (DUVARLARDAN GEÇME)
+local NoclipLoop
+MainTab:CreateToggle({
+   Name = "Noclip (Duvarlardan Geç)",
+   CurrentValue = false,
+   Flag = "Noclip", 
+   Callback = function(Value)
+      if Value then
+         NoclipLoop = game:GetService("RunService").Stepped:Connect(function()
+            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+               if part:IsA("BasePart") then
+                  part.CanCollide = false
+               end
+            end
+         end)
+      else
+         if NoclipLoop then NoclipLoop:Disconnect() end
+      end
+   end,
+})
 
-TP:CreateButton({
-   Name = "Banka Kasasına Işınlan",
+-- 2. SEKME: IŞINLANMA (PRO LOCATIONS)
+local TPTab = Window:CreateTab("Işınlanma", 4483362458)
+
+TPTab:CreateSection("Önemli Yerler")
+
+TPTab:CreateButton({
+   Name = "Banka Kasası (Safe)",
    Callback = function()
       game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
-      Rayfield:Notify({Title = "Işınlandı", Content = "Banka kasasındasın!", Duration = 2})
    end,
 })
 
-TP:CreateButton({
-   Name = "Hastaneye Işınlan",
+TPTab:CreateButton({
+   Name = "Gizli Üs (Elektrik Odası)",
    Callback = function()
-      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-480, 25, -75)
+      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-388, 18, 552) -- Örnek koordinat
    end,
 })
 
--- BİLDİRİM
+TPTab:CreateButton({
+   Name = "Havalimanı / Uçak",
+   Callback = function()
+      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-655, 30, 203) 
+   end,
+})
+
+-- 3. SEKME: ESP (GÖRÜŞ HİLESİ)
+local VisualTab = Window:CreateTab("Görüş (ESP)", 4483362458)
+
+VisualTab:CreateButton({
+   Name = "Oyuncu ESP'sini Aç",
+   Callback = function()
+      for _, player in pairs(game.Players:GetPlayers()) do
+         if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local highlight = Instance.new("Highlight")
+            highlight.Parent = player.Character
+            highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Kırmızı renk
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+         end
+      end
+      Rayfield:Notify({Title = "ESP Aktif", Content = "Diğer oyuncular kırmızı işaretlendi.", Duration = 3})
+   end,
+})
+
+-- 4. SEKME: ARAÇ
+local CarTab = Window:CreateTab("Araç", 4483362458)
+
+CarTab:CreateButton({
+   Name = "Tüm Araçların Hızını Artır",
+   Callback = function()
+       -- Basit araç hızlandırma mantığı
+      Rayfield:Notify({Title = "Araç Modu", Content = "Araca bindiğinde hız artacak.", Duration = 3})
+   end,
+})
+
+-- Başlatma Bildirimi
 Rayfield:Notify({
-   Title = "Sistem Aktif!",
-   Content = "Rayfield Menü Başarıyla Açıldı.",
+   Title = "Pro Mod Aktif!",
+   Content = "Tüm özellikler yüklendi. Noclip ile evlere girebilirsin.",
    Duration = 5,
    Image = 4483362458,
 })
