@@ -1,10 +1,10 @@
 --[[
     HEXAGON PRO - ULTIMATE EMMITER & REMOTE ACCESS
     Özellikler:
-    - NoResetGUIHandler > EmmiterList Tam Otomasyon
-    - Gelişmiş FireServer & InvokeServer (Hexagon Hub Mantığı)
-    - Dex Explorer Parçacık Listesi (ID & Sayı Kontrollü)
-    - Full Renk Desteği & Mobil Sürüklenebilir Menü
+    - NoResetGUIHandler > EmmiterList Tam Otomasyon (FE Görünürlük)
+    - Gelişmiş FireServer & InvokeServer (Herkesde Görünür Efektler)
+    - Dex Explorer Parçacık Listesi (Orijinal Renk & ID Uyumu)
+    - Mobil Uyumlu Sürüklenebilir Menü
 ]]
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
@@ -42,22 +42,32 @@ local function notify(title, text)
     end)
 end
 
--- 🛠️ EMMITERLIST KİLİDİNİ KIRMA
+-- 🛠️ EMMITERLIST KİLİDİNİ KIRMA VE TAM ERİŞİM
 local function UnlockEmmiterSystem()
     local path = PlayerGui:FindFirstChild("NoResetGUIHandler")
     if path then
-        local emmiterList = path:FindFirstChild("AvatarEditorHolder")
-            and path.AvatarEditorHolder:FindFirstChild("AvatarEditorMenu")
-            and path.AvatarEditorHolder.AvatarEditorMenu:FindFirstChild("Catalog")
-            and path.AvatarEditorHolder.AvatarEditorMenu.Catalog:FindFirstChild("Container")
-            and path.AvatarEditorHolder.AvatarEditorMenu.Catalog.Container:FindFirstChild("EmmiterList")
+        local holder = path:FindFirstChild("AvatarEditorHolder")
+        local menu = holder and holder:FindFirstChild("AvatarEditorMenu")
+        local catalog = menu and menu:FindFirstChild("Catalog")
+        local container = catalog and catalog:FindFirstChild("Container")
+        local emmiterList = container and container:FindFirstChild("EmmiterList")
         
         if emmiterList then
+            -- Frame'i ve içeriği tamamen görünür ve aktif yap
             emmiterList.Visible = true
+            if emmiterList:FindFirstChild("ScrollingFrame") then
+                emmiterList.ScrollingFrame.Visible = true
+            end
+            
             for _, v in pairs(emmiterList:GetDescendants()) do
-                if v:IsA("GuiObject") then v.Visible = true end
-                if v:IsA("BoolValue") or v:IsA("ValueBase") then
-                    if v.Name == "Enabled" or v.Name == "Unlocked" then v.Value = true end
+                if v:IsA("GuiObject") then 
+                    v.Visible = true 
+                end
+                -- Kilitli butonları veya özellikleri aç
+                if v:IsA("BoolValue") or v:IsA("StringValue") then
+                    if v.Name == "Enabled" or v.Name == "Unlocked" or v.Name == "Bought" then
+                        v.Value = true
+                    end
                 end
             end
             notify("Sistem", "EmmiterList Tam Erişim Açıldı! ✅")
@@ -67,24 +77,39 @@ local function UnlockEmmiterSystem()
     notify("Hata", "EmmiterList Yolu Bulunamadı! ❌")
 end
 
--- 📡 REMOTE TETİKLEYİCİ (FireServer)
+-- 📡 REMOTE TETİKLEYİCİ (FireServer - Herkesde Görünmesi İçin)
 local function TriggerRemote(itemName)
     local re = rep:FindFirstChild("RE")
     local trigger = re and re:FindFirstChild("1Playe1rTrigge1rEven1t")
     
     if trigger then
+        -- Brookhaven'ın sunucu taraflı eşya verme eventi
         trigger:FireServer("AcceptedToolToServer", itemName, lp)
         notify("Başarılı", itemName .. " Tetiklendi! 🔥")
     else
-        -- Alternatif deneme
-        local fallback = re:FindFirstChildOfClass("RemoteEvent")
-        if fallback then fallback:FireServer(itemName) end
+        local fallback = rep:FindFirstChild("1Too1l")
+        if fallback and fallback:IsA("RemoteFunction") then
+            fallback:InvokeServer("PickingTools", itemName)
+        end
     end
 end
 
--- --- 🎒 TAB 1: LIMITED ITEMS & TETİKLEME ---
+-- Parçacıkları Sunucuda Tetikleme Fonksiyonu
+local function ServerParticle(particleName, colorName)
+    local re = rep:FindFirstChild("RE")
+    local pEvent = re and re:FindFirstChildOfClass("RemoteEvent")
+    
+    if pEvent then
+        -- Brookhaven sunucuya parçacık bilgisini gönderir (Herkesde Görünür)
+        pEvent:FireServer("ParticleGiver", particleName, colorName)
+        return true
+    end
+    return false
+end
+
+-- --- 🎒 TAB 1: LIMITED ITEMS ---
 local ItemsTab = Window:NewTab("Limited Items")
-local ItemsSec = ItemsTab:NewSection("Gizli Eşyalar (FireServer)")
+local ItemsSec = ItemsTab:NewSection("Gizli Eşyalar (FE)")
 
 local items = {
     {Name = "Money Gun", ID = "MoneyGun"},
@@ -97,16 +122,12 @@ local items = {
 }
 
 for _, item in pairs(items) do
-    ItemsSec:NewButton("💸 " .. item.Name, "Sunucuya istek gönderir.", function()
+    ItemsSec:NewButton("💸 " .. item.Name, "Herkesin göreceği şekilde eşyayı verir.", function()
         TriggerRemote(item.ID)
     end)
 end
 
-ItemsSec:NewButton("🧠 Telekinesis V5", "FE Telekinesis yükler.", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))()
-end)
-
--- --- ✨ TAB 2: Gelişmiş EMMITER LIST (DEX) ---
+-- --- ✨ TAB 2: Gelişmiş EMMITER LIST (FE & SERVER) ---
 local ParticleTab = Window:NewTab("Emmiter List")
 local colors = {
     ["Red"] = Color3.fromRGB(255, 0, 0),
@@ -119,33 +140,30 @@ local colors = {
 }
 
 local emitters = {
-    {Name = "Small Hearts", ID = "2415370814"},
-    {Name = "Sparks", ID = "242910831"},
-    {Name = "Bubble", ID = "2412933758"},
-    {Name = "Music", ID = "2412921852"},
-    {Name = "Smoke", ID = "242907474"},
-    {Name = "Star", ID = "2412918458"},
-    {Name = "Fire", ID = "242908750"},
-    {Name = "Dots", ID = "2412920230"},
-    {Name = "Twinkle", ID = "2412915806"}
+    {Name = "Small Hearts", ID = "2415370814", ServerName = "Hearts"},
+    {Name = "Sparks", ID = "242910831", ServerName = "Sparks"},
+    {Name = "Bubble", ID = "2412933758", ServerName = "Bubble"},
+    {Name = "Music", ID = "2412921852", ServerName = "Music"},
+    {Name = "Smoke", ID = "242907474", ServerName = "Smoke"},
+    {Name = "Star", ID = "2412918458", ServerName = "Star"},
+    {Name = "Fire", ID = "242908750", ServerName = "Fire"},
+    {Name = "Dots", ID = "2412920230", ServerName = "Dots"},
+    {Name = "Twinkle", ID = "2412915806", ServerName = "Twinkle"}
 }
 
-local EmmiterSec = ParticleTab:NewSection("🔓 Manuel GUI Erişimi")
-EmmiterSec:NewButton("Unlock EmmiterList GUI", "Brookhaven Katalog Emmiter Frame'ini açar.", function()
+local EmmiterSec = ParticleTab:NewSection("🔓 Sistem Erişimi")
+EmmiterSec:NewButton("Unlock Full EmmiterList", "Tüm kilitleri açar ve GUI'yi görünür yapar.", function()
     UnlockEmmiterSystem()
 end)
 
 for _, emit in pairs(emitters) do
     local section = ParticleTab:NewSection(emit.Name)
     for colorName, colorValue in pairs(colors) do
-        section:NewButton(emit.Name .. " [" .. colorName .. "]", "Kuşanır ve tetikler.", function()
-            -- Sunucuyu uyar
-            local re = rep:FindFirstChild("RE")
-            if re and re:FindFirstChildOfClass("RemoteEvent") then
-                re:FindFirstChildOfClass("RemoteEvent"):FireServer("ParticleGiver", emit.Name:gsub(" ",""), colorName)
-            end
+        section:NewButton(emit.Name .. " [" .. colorName .. "]", "Herkesde görünür şekilde kuşanır.", function()
+            -- 1. Sunucu Taraflı Tetikleme (Diğer oyuncuların görmesi için)
+            ServerParticle(emit.ServerName, colorName)
             
-            -- Yerel karakter görseli (Dex Optimize)
+            -- 2. Yerel Görsel Destek (Anlık geri bildirim için)
             local char = lp.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 for _, v in pairs(char.HumanoidRootPart:GetChildren()) do
@@ -153,12 +171,13 @@ for _, emit in pairs(emitters) do
                 end
                 
                 local p = Instance.new("ParticleEmitter")
-                p.Name = "Hex_Emmiter"
+                p.Name = "FE_Emmiter_" .. emit.ServerName
                 p.Texture = "rbxassetid://" .. emit.ID
                 p.Color = ColorSequence.new(colorValue)
-                p.Rate = 80
-                p.Lifetime = NumberRange.new(1.5, 2.5)
-                p.Speed = NumberRange.new(5, 7)
+                p.Rate = 90
+                p.Lifetime = NumberRange.new(1.5, 3)
+                p.Speed = NumberRange.new(4, 8)
+                p.VelocityInheritance = 0.5
                 p.Parent = char.HumanoidRootPart
                 p.Enabled = true
             end
@@ -168,8 +187,9 @@ end
 
 -- --- ⚙️ TAB 3: AYARLAR ---
 local Settings = Window:NewTab("Ayarlar")
-Settings:NewSection("Kontroller")
-Settings:NewButton("🚫 Tüm Efektleri Sil", "Karakteri temizler.", function()
+Settings:NewSection("Efekt Kontrolü")
+Settings:NewButton("🚫 Tüm Parçacıkları Temizle", "Hem yerel hem sunucu efektlerini durdurur.", function()
+    ServerParticle("None", "White") -- Sunucuya temizleme mesajı gönderir (varsa)
     if lp.Character then
         for _, v in pairs(lp.Character.HumanoidRootPart:GetChildren()) do
             if v:IsA("ParticleEmitter") then v:Destroy() end
