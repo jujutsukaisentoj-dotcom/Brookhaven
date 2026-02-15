@@ -1,58 +1,58 @@
--- Executor İzin ve Uyumluluk Kontrolü
-local function SafeLoad(url)
-    local success, result = pcall(function()
-        return game:HttpGet(url)
-    end)
-    if success then return result else return nil end
-end
+-- ESKİ KÜTÜPHANELERİ UNUT, BU KENDİ YAPIMIMIZ BİR ARAYÜZ
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local SpeedButton = Instance.new("TextButton")
+local UnlockButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
 
--- Kütüphaneyi çağırıyoruz
-local LibSource = SafeLoad("https://raw.githubusercontent.com/REDZHUB/RedzLibV2/main/source.lua")
+-- Ayarlar
+ScreenGui.Parent = game.CoreGui
+ScreenGui.Name = "BrookhavenOzel"
 
-if LibSource then
-    local RedzLib = loadstring(LibSource)()
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 200, 0, 250)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Menüyü ekranda sürükleyebilirsin
 
-    -- Ana Pencere Oluşturma
-    local Window = RedzLib:MakeWindow({
-      Title = "Brookhaven: VIP Hub",
-      SubTitle = "Tüm Executorlar Aktif",
-      SaveFolder = "Brookhaven_Config.json"
-    })
+UICorner.Parent = MainFrame
 
-    -- Sekmeleri Hazırlayalım
-    local MainTab = Window:MakeTab("Oyuncu", "user")
-    local WorldTab = Window:MakeTab("Dünya/Evler", "home")
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "BROOKHAVEN HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1
+Title.TextSize = 20
 
-    -- Başarı Bildirimi
-    RedzLib:SetNotify("Erişim Verildi!", "Tüm executor izinleri onaylandı.", 5)
+-- HIZ BUTONU (Fonksiyonlu)
+SpeedButton.Parent = MainFrame
+SpeedButton.Position = UDim2.new(0.1, 0, 0.25, 0)
+SpeedButton.Size = UDim2.new(0.8, 0, 0.2, 0)
+SpeedButton.Text = "Süper Hız (100)"
+SpeedButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
 
-    -- HIZ AYARI (Örnek Fonksiyon)
-    MainTab:AddSlider({
-      Name = "Yürüme Hızı",
-      Min = 16,
-      Max = 250,
-      Default = 16,
-      Callback = function(Value)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+SpeedButton.MouseButton1Click:Connect(function()
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    print("Hız 100 yapıldı!")
+end)
+
+-- EV KİLİDİ AÇMA (Görsel Buton)
+UnlockButton.Parent = MainFrame
+UnlockButton.Position = UDim2.new(0.1, 0, 0.5, 0)
+UnlockButton.Size = UDim2.new(0.8, 0, 0.2, 0)
+UnlockButton.Text = "Ev Kilidi Kaldır"
+UnlockButton.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+
+UnlockButton.MouseButton1Click:Connect(function()
+    -- Brookhaven ev kapıları kontrolü (Basit Versiyon)
+    for i,v in pairs(game.Workspace:GetDescendants()) do
+        if v.Name == "Door" or v.Name == "Gate" then
+            v.CanCollide = false
+            v.Transparency = 0.5
         end
-      end
-    })
-
-    -- ZIPLAMA AYARI
-    MainTab:AddSlider({
-      Name = "Zıplama Gücü",
-      Min = 50,
-      Max = 300,
-      Default = 50,
-      Callback = function(Value)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-            game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
-        end
-      end
-    })
-
-else
-    warn("Kütüphane yüklenemedi! Executor internet erişimini engelliyor olabilir.")
-end
+    end
+    print("Kapılar baypas edildi!")
+end)
