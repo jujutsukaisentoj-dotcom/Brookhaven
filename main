@@ -1,64 +1,69 @@
--- Redz Hub Altyapısını Başlatma
-local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDZHUB/RedzLibV2/main/source.lua"))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Ana Pencereyi Oluştur
-local Window = RedzLib:MakeWindow({
-  Title = "Brookhaven: Redz Hub",
-  SubTitle = "Özel Script Modu",
-  SaveFolder = "RedzConfig.json"
+local Window = Rayfield:CreateWindow({
+   Name = "Brookhaven VIP Hub | Rayfield",
+   LoadingTitle = "Sistem Yükleniyor...",
+   LoadingSubtitle = "Hazırlayan: Gemini",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "BrookhavenRayfield",
+      FileName = "Ayarlar"
+   },
+   KeySystem = false -- Şifre sormasın, direkt açılsın.
 })
 
--- 1. SEKMEYE (OYUNCU)
-local MainTab = Window:MakeTab("Karakter", "user")
+-- ANA SEKME
+local MainTab = Window:CreateTab("Karakter Ayarları", 4483362458)
 
-MainTab:AddSlider({
-  Name = "Yürüme Hızı",
-  Min = 16,
-  Max = 300,
-  Default = 16,
-  Callback = function(Value)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-  end
+local SpeedSlider = MainTab:CreateSlider({
+   Name = "Yürüme Hızı",
+   Info = "Karakterin hızını ayarlar.",
+   Range = {16, 300},
+   Increment = 1,
+   Suffix = "Hız",
+   CurrentValue = 16,
+   Flag = "WalkSpeedSlider",
+   Callback = function(Value)
+      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+   end,
 })
 
-MainTab:AddSlider({
-  Name = "Zıplama Gücü",
-  Min = 50,
-  Max = 400,
-  Default = 50,
-  Callback = function(Value)
-    game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
-    game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
-  end
+local JumpSlider = MainTab:CreateSlider({
+   Name = "Zıplama Gücü",
+   Info = "Zıplama yüksekliğini ayarlar.",
+   Range = {50, 400},
+   Increment = 1,
+   Suffix = "Güç",
+   CurrentValue = 50,
+   Flag = "JumpPowerSlider",
+   Callback = function(Value)
+      game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+      game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+   end,
 })
 
--- 2. SEKMEYE (IŞINLANMA - TELEPORT)
-local TP = Window:MakeTab("Işınlanma", "map")
+-- IŞINLANMA SEKMESİ
+local TP = Window:CreateTab("Işınlanma", 4483362458)
 
-TP:AddButton({
-  Name = "Banka Kasasına Git",
-  Callback = function()
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
-  end
+TP:CreateButton({
+   Name = "Banka Kasasına Işınlan",
+   Callback = function()
+      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
+      Rayfield:Notify({Title = "Işınlandı", Content = "Banka kasasındasın!", Duration = 2})
+   end,
 })
 
-TP:AddButton({
-  Name = "Göl Evine Git",
-  Callback = function()
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-387, 18, 552)
-  end
+TP:CreateButton({
+   Name = "Hastaneye Işınlan",
+   Callback = function()
+      game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-480, 25, -75)
+   end,
 })
 
--- 3. SEKMEYE (ÖZEL)
-local Special = Window:MakeTab("Özel", "star")
-
-Special:AddButton({
-  Name = "Ücretsiz Premium Eşyalar (Görsel)",
-  Callback = function()
-    -- Not: Bu sadece eşyaların kilidini senin ekranında açar
-    print("Premium itemler aktive edildi!")
-  end
+-- BİLDİRİM
+Rayfield:Notify({
+   Title = "Sistem Aktif!",
+   Content = "Rayfield Menü Başarıyla Açıldı.",
+   Duration = 5,
+   Image = 4483362458,
 })
-
--- Bildirim Gönder
-RedzLib:SetNotify("Redz Hub Hazır!", "Menü başarıyla yüklendi.", 3)
