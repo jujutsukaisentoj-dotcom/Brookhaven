@@ -1,9 +1,21 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Brookhaven Script", "BloodTheme") -- Buradan tema değişir
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "Brookhaven Özel", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
 
-local Tab = Window:NewTab("Hileler")
-local Section = Tab:NewSection("Genel")
+local Tab = Window:MakeTab({
+	Name = "Oyuncu",
+	Icon = "rbxassetid://4483345906",
+	PremiumOnly = false
+})
 
-Section:NewButton("Zıplama Artır", "Daha yükseğe zıpla", function()
-    game.Players.LocalPlayer.Character.Humanoid.JumpPower = 100
-end)
+Tab:AddSlider({
+	Name = "Hız Ayarı",
+	Min = 16,
+	Max = 200,
+	Default = 16,
+	Color = Color3.fromRGB(255,255,255),
+	Increment = 1,
+	ValueName = "Hız",
+	Callback = function(Value)
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+	end    
+})
