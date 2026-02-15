@@ -5,6 +5,7 @@
     - Brookhaven Gizli Eşya Tetikleyicileri (1Playe1rTrigge1rEven1t)
     - Dex Explorer Parçacık Listesi (Sunucu Taraflı Tetikleme)
     - AvatarEditor EmmiterList Erişimi ve Kontrolü (Otomatik True)
+    - Renk ve Görünüm ID Bağlantılı Parçacık Sistemi
     - Mobil Uyumlu Sürüklenebilir Buton
 ]]
 
@@ -110,7 +111,7 @@ local function GetItem(itemName)
     end
 end
 
--- Parçacık Tetikleyici (FireServer & Dex Kontrollü Sayılar)
+-- Parçacık Tetikleyici (FireServer & Dex Kontrollü Sayılar & ID Desteği)
 local function GiveParticle(cat, colorName)
     local re = rep:FindFirstChild("RE")
     local remote = re and re:FindFirstChildOfClass("RemoteEvent")
@@ -133,25 +134,39 @@ local function GiveParticle(cat, colorName)
         -- Yeni Emitter (Sayıları Dex gibi optimize edilmiş)
         local p = Instance.new("ParticleEmitter")
         p.Name = "Dex_" .. cat
-        p.Enabled = true -- Otomatik True
-        p.Rate = 75 -- Dex standart yoğunluk
-        p.Lifetime = NumberRange.new(1.2, 2)
-        p.Speed = NumberRange.new(3, 5)
-        p.VelocityInheritance = 0.2
+        p.Enabled = true 
+        p.Rate = 75 
+        p.Lifetime = NumberRange.new(1.2, 2.5)
+        p.Speed = NumberRange.new(4, 6)
+        p.VelocityInheritance = 0.3
         
-        -- Renk Ayarı
+        -- Renk Ayarı (Hexagon Red/Blue Özel)
         local colorMap = {
             ["White"] = Color3.fromRGB(255, 255, 255),
             ["Yellow"] = Color3.fromRGB(255, 255, 0),
             ["Orange"] = Color3.fromRGB(255, 165, 0),
             ["Green"] = Color3.fromRGB(0, 255, 0),
-            ["Blue"] = Color3.fromRGB(0, 170, 255),
+            ["Blue"] = Color3.fromRGB(0, 150, 255),
             ["Purple"] = Color3.fromRGB(170, 0, 255),
             ["Pink"] = Color3.fromRGB(255, 100, 200),
             ["Red"] = Color3.fromRGB(255, 0, 0),
             ["Black"] = Color3.fromRGB(15, 15, 15)
         }
         p.Color = ColorSequence.new(colorMap[colorName] or Color3.fromRGB(255, 255, 255))
+        
+        -- Texture/ID Ayarları (Kategoriye Göre Otomatik)
+        local textureIDs = {
+            ["Hearts"] = "rbxassetid://2415370814",
+            ["Sparks"] = "rbxassetid://242910831",
+            ["Bubble"] = "rbxassetid://2412933758",
+            ["Music"] = "rbxassetid://2412921852",
+            ["Smoke"] = "rbxassetid://242907474",
+            ["Star"] = "rbxassetid://2412918458",
+            ["Fire"] = "rbxassetid://242908750",
+            ["Dots"] = "rbxassetid://2412920230",
+            ["Twinkle"] = "rbxassetid://2412915806"
+        }
+        p.Texture = textureIDs[cat] or ""
         
         p.Parent = hrp
     end
@@ -185,7 +200,7 @@ ItemsSec:NewButton("🧠 Telekinesis V5", "Dış scripti yükler.", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))()
 end)
 
--- --- 2. TAB: FE PARTICLES (FULL DEX LIST) ---
+-- --- 2. TAB: FE PARTICLES (DEX & EMMITERLIST) ---
 local ParticleTab = Window:NewTab("FE Particles")
 local colors = {"White", "Yellow", "Orange", "Green", "Blue", "Purple", "Pink", "Red", "Black"}
 local dexCats = {"Hearts", "Sparks", "Bubble", "Music", "Smoke", "Star", "Fire", "Dots", "Twinkle"}
@@ -198,7 +213,7 @@ end)
 for _, cat in pairs(dexCats) do
     local sec = ParticleTab:NewSection(cat)
     for _, col in pairs(colors) do
-        sec:NewButton(cat .. " " .. col, "Dex kontrollü " .. col .. " " .. cat .. " tetikler.", function()
+        sec:NewButton(cat .. " " .. col, "Dex & ID uyumlu " .. col .. " " .. cat .. " kuşanır.", function()
             GiveParticle(cat, col)
         end)
     end
@@ -210,8 +225,11 @@ Settings:NewSection("Kontroller")
 Settings:NewKeybind("Menü Tuşu", "PC İçin", Enum.KeyCode.RightControl, function() Library:ToggleUI() end)
 Settings:NewButton("🚫 Temizle", "Efektleri Siler", function()
     if lp.Character then
-        for _, v in pairs(lp.Character.HumanoidRootPart:GetChildren()) do
-            if v:IsA("ParticleEmitter") then v:Destroy() end
+        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            for _, v in pairs(hrp:GetChildren()) do
+                if v:IsA("ParticleEmitter") then v:Destroy() end
+            end
         end
     end
 end)
