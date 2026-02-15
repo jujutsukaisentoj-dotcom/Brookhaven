@@ -4,7 +4,7 @@
     - Gelişmiş RemoteEvent/Function Taraması (FireServer & InvokeServer)
     - Brookhaven Gizli Eşya Tetikleyicileri (1Playe1rTrigge1rEven1t)
     - Dex Explorer Parçacık Listesi (Sunucu Taraflı Tetikleme)
-    - AvatarEditor EmmiterList Erişimi ve Kontrolü
+    - AvatarEditor EmmiterList Erişimi ve Kontrolü (Otomatik True)
     - Mobil Uyumlu Sürüklenebilir Buton
 ]]
 
@@ -44,9 +44,8 @@ local function tryNotify(title, text)
     end)
 end
 
--- --- 🔍 EMMITERLIST ERİŞİM SİSTEMİ ---
+-- --- 🔍 EMMITERLIST OTOMATİK KONTROL SİSTEMİ ---
 local function AccessEmmiterList()
-    -- Belirttiğin tam GUI yolu
     local path = PlayerGui:FindFirstChild("NoResetGUIHandler")
     if path then
         local target = path:FindFirstChild("AvatarEditorHolder")
@@ -56,19 +55,22 @@ local function AccessEmmiterList()
         if target then target = target:FindFirstChild("EmmiterList") end
         
         if target then
-            -- EmmiterList'i aktif et ve tüm özelliklerine erişim sağla
+            -- EmmiterList ve tüm alt objelerini otomatik AKTİF (true) yapar
             target.Visible = true
             for _, child in pairs(target:GetChildren()) do
                 if child:IsA("GuiObject") then
                     child.Visible = true
-                    -- Burada ek özellikler (enabled vb.) varsa true yapılabilir
+                    -- Eğer içerisinde Checkbox veya Toggle varsa onları da true yapar
+                    local toggle = child:FindFirstChild("Toggle") or child:FindFirstChild("Enabled")
+                    if toggle and toggle:IsA("BoolValue") then
+                        toggle.Value = true
+                    end
                 end
             end
-            tryNotify("EmmiterList", "Erişim sağlandı ve aktif edildi! ✅")
+            tryNotify("EmmiterList", "Otomatik erişim sağlandı ve aktif edildi! ✅")
             return target
         end
     end
-    tryNotify("Hata", "EmmiterList yolu bulunamadı! ❌")
     return nil
 end
 
@@ -108,12 +110,50 @@ local function GetItem(itemName)
     end
 end
 
--- Parçacık Tetikleyici (FireServer)
-local function GiveParticle(cat, color)
+-- Parçacık Tetikleyici (FireServer & Dex Kontrollü Sayılar)
+local function GiveParticle(cat, colorName)
     local re = rep:FindFirstChild("RE")
     local remote = re and re:FindFirstChildOfClass("RemoteEvent")
+    
+    -- Brookhaven Sunucu Tetiklemesi
     if remote then
-        remote:FireServer("ParticleGiver", cat, color)
+        remote:FireServer("ParticleGiver", cat, colorName)
+    end
+    
+    -- Dex Kontrollü Local Uygulama (Görsel Garanti)
+    local char = lp.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
+        
+        -- Eskileri temizle
+        for _, v in pairs(hrp:GetChildren()) do
+            if v:IsA("ParticleEmitter") then v:Destroy() end
+        end
+        
+        -- Yeni Emitter (Sayıları Dex gibi optimize edilmiş)
+        local p = Instance.new("ParticleEmitter")
+        p.Name = "Dex_" .. cat
+        p.Enabled = true -- Otomatik True
+        p.Rate = 75 -- Dex standart yoğunluk
+        p.Lifetime = NumberRange.new(1.2, 2)
+        p.Speed = NumberRange.new(3, 5)
+        p.VelocityInheritance = 0.2
+        
+        -- Renk Ayarı
+        local colorMap = {
+            ["White"] = Color3.fromRGB(255, 255, 255),
+            ["Yellow"] = Color3.fromRGB(255, 255, 0),
+            ["Orange"] = Color3.fromRGB(255, 165, 0),
+            ["Green"] = Color3.fromRGB(0, 255, 0),
+            ["Blue"] = Color3.fromRGB(0, 170, 255),
+            ["Purple"] = Color3.fromRGB(170, 0, 255),
+            ["Pink"] = Color3.fromRGB(255, 100, 200),
+            ["Red"] = Color3.fromRGB(255, 0, 0),
+            ["Black"] = Color3.fromRGB(15, 15, 15)
+        }
+        p.Color = ColorSequence.new(colorMap[colorName] or Color3.fromRGB(255, 255, 255))
+        
+        p.Parent = hrp
     end
 end
 
@@ -150,25 +190,16 @@ local ParticleTab = Window:NewTab("FE Particles")
 local colors = {"White", "Yellow", "Orange", "Green", "Blue", "Purple", "Pink", "Red", "Black"}
 local dexCats = {"Hearts", "Sparks", "Bubble", "Music", "Smoke", "Star", "Fire", "Dots", "Twinkle"}
 
-local EmmiterSec = ParticleTab:NewSection("✨ EmmiterList Kontrolü")
-EmmiterSec:NewButton("🔓 Unlock EmmiterList", "Oyunun yerel emmiter listesini açar.", function()
+local EmmiterSec = ParticleTab:NewSection("✨ EmmiterList Otomasyonu")
+EmmiterSec:NewButton("🔓 Auto-Unlock EmmiterList", "EmmiterList'i otomatik bulur ve HER ŞEYİ true yapar.", function()
     AccessEmmiterList()
 end)
 
 for _, cat in pairs(dexCats) do
     local sec = ParticleTab:NewSection(cat)
     for _, col in pairs(colors) do
-        sec:NewButton(cat .. " " .. col, col .. " " .. cat .. " efektini tetikler.", function()
+        sec:NewButton(cat .. " " .. col, "Dex kontrollü " .. col .. " " .. cat .. " tetikler.", function()
             GiveParticle(cat, col)
-            
-            local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-            if root then
-                for _, v in pairs(root:GetChildren()) do if v:IsA("ParticleEmitter") then v:Destroy() end end
-                local p = Instance.new("ParticleEmitter", root)
-                p.Name = "HexEffect"
-                p.Color = ColorSequence.new(Color3.fromHex(col == "Black" and "000000" or col))
-                p.Rate = 50
-            end
         end)
     end
 end
