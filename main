@@ -1,24 +1,9 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Brookhaven Script", "BloodTheme") -- Buradan tema değişir
 
-local Window = Rayfield:CreateWindow({
-   Name = "Brookhaven Özel Script",
-   LoadingTitle = "Sistem Hazırlanıyor...",
-   LoadingSubtitle = "Hazırlayan: Gemini",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "BrookhavenConfig", 
-      FileName = "Ayarlar"
-   },
-   KeySystem = false -- Şimdilik anahtar sistemi koymuyorum, direkt açılsın.
-})
+local Tab = Window:NewTab("Hileler")
+local Section = Tab:NewSection("Genel")
 
--- Ana Sekmeyi Oluşturuyoruz
-local MainTab = Window:CreateTab("Oyuncu Ayarları", 4483362458) -- İkon ID'si ile beraber
-local Section = MainTab:CreateSection("Hareket Özellikleri")
-
-Rayfield:Notify({
-   Title = "Başarılı!",
-   Content = "Arayüz başarıyla yüklendi. İyi oyunlar!",
-   Duration = 5,
-   Image = 4483362458,
-})
+Section:NewButton("Zıplama Artır", "Daha yükseğe zıpla", function()
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = 100
+end)
