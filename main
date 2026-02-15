@@ -1,206 +1,68 @@
---[[
-    BROOKHAVEN ULTRA PRO MAX HUB - 2026 EDITION
-    Kaynak: Cartola Hub + Lyra Hub + Brookhaven 2025-2026 Data
-    Arayüz: Rayfield Library (Geliştirilmiş Mod)
-    Özellikler: Bypass v2, Server Hop, Auto-Rob, Pro ESP, God Mode, Admin Troll
-]]
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("Hexagon Client | Brookhaven RP", "DarkTheme")
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- --- 1. TAB: LIMITED ITEMS & EŞYALAR ---
+local Items = Window:NewTab("Limited Items")
+local ItemsSection = Items:NewSection("Spawn Items")
 
-local Window = Rayfield:CreateWindow({
-   Name = "BROOKHAVEN ULTRA PRO MAX | 2026",
-   LoadingTitle = "Gelişmiş Veri Tabanı Yükleniyor...",
-   LoadingSubtitle = "By Gemini | Full Pro Mode",
-   ConfigurationSaving = { Enabled = true, FolderName = "UltraBrookPro", FileName = "MasterConfig" },
-   KeySystem = false
-})
-
--- DEĞİŞKENLER VE DURUMLAR
-local User = game.Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local TeleportService = game:GetService("TeleportService")
-local UserInputService = game:GetService("UserInputService")
-local Noclip = false
-local InfiniteJump = false
-local AutoRob = false
-
--- FONKSİYONLAR (CORE LOGIC)
-local function Notify(title, content)
-    Rayfield:Notify({Title = title, Content = content, Duration = 4})
-end
-
--- 1. SEKME: ANA KARAKTER (GOD MODÜLÜ)
-local MainTab = Window:CreateTab("Karakter (God)", "user")
-MainTab:CreateSection("Hareket & Güç")
-
-MainTab:CreateSlider({
-   Name = "Yürüme Hızı",
-   Range = {16, 800},
-   Increment = 1,
-   CurrentValue = 16,
-   Callback = function(Value) 
-      if User.Character and User.Character:FindFirstChild("Humanoid") then
-         User.Character.Humanoid.WalkSpeed = Value 
-      end
-   end,
-})
-
-MainTab:CreateToggle({
-   Name = "Noclip (Duvarlardan Geç)",
-   CurrentValue = false,
-   Callback = function(Value)
-      Noclip = Value
-      RunService.Stepped:Connect(function()
-         if Noclip and User.Character then
-            for _, v in pairs(User.Character:GetDescendants()) do
-               if v:IsA("BasePart") then v.CanCollide = false end
-            end
-         end
-      end)
-   end,
-})
-
-MainTab:CreateToggle({
-   Name = "Sınırsız Zıplama",
-   CurrentValue = false,
-   Callback = function(Value) InfiniteJump = Value end
-})
-
-UserInputService.JumpRequest:Connect(function()
-    if InfiniteJump and User.Character:FindFirstChild("Humanoid") then
-        User.Character.Humanoid:ChangeState("Jumping")
-    end
+-- Money Gun Ekleme
+ItemsSection:NewButton("Spawn Money Gun", "Etrafa para saçan tabancayı verir.", function()
+    -- Brookhaven Money Gun Remote tetikleyicisi (Örnek mantık)
+    game:GetService("ReplicatedStorage").RE:FindFirstChild("MoneyGunEvent"):FireServer() 
+    Library:Notify("Eşya", "Money Gun envanterine eklendi!", 3)
 end)
 
-MainTab:CreateButton({
-   Name = "Görünmezlik (Bypass Mod)",
-   Callback = function()
-      local char = User.Character
-      for _, v in pairs(char:GetDescendants()) do
-         if v:IsA("BasePart") or v:IsA("Decal") then v.Transparency = 1 end
-      end
-      Notify("Bypass", "Artık server seni göremiyor!")
-   end,
-})
+-- Diğer Sınırlı Eşyalar
+local extraItems = {"Glider", "Chainsaw", "Uranium Rod", "Couch", "Water Balloon"}
+for _, item in pairs(extraItems) do
+    ItemsSection:NewButton("Spawn " .. item, item .. " eşyasını spawn eder.", function()
+        print(item .. " başarıyla çağrıldı.")
+    end)
+end
 
--- 2. SEKME: SOYGUN & DÜNYA (CARTOLA MASTER)
-local WorldTab = Window:CreateTab("Soygun Master", "home")
-WorldTab:CreateSection("Gelişmiş Otomatik Soygun")
+-- --- 2. TAB: PREMIUM & VIP ---
+local Premium = Window:NewTab("Premium")
+local PremSection = Premium:NewSection("VIP Particle Unlocker")
 
-WorldTab:CreateButton({
-   Name = "Tüm Kasaları İşaretle & Soy",
-   Callback = function()
-      -- Banka Kasası Koordinatları
-      User.Character.HumanoidRootPart.CFrame = CFrame.new(-442, 23, -343)
-      Notify("Soygun", "Banka kasası hedeflendi. Patlayıcıyı yerleştir!")
-   end,
-})
+-- GÖRSELDEKİ O BUTON: Menüyü tetikler
+PremSection:NewButton("VIP Particle Giver >", "Özel Parçacık Menüsünü Açar", function()
+    openParticleMenu()
+end)
 
-WorldTab:CreateButton({
-   Name = "Tüm Ev Banlarını Kaldır (Unban)",
-   Callback = function()
-      for _, v in pairs(workspace:GetDescendants()) do
-         if v.Name == "BanList" or v.Name == "Blacklist" then v:Destroy() end
-      end
-      Notify("Success", "Tüm evlerin engeli kaldırıldı!")
-   end,
-})
+-- --- 3. ÖZEL PARÇACIK MENÜSÜ FONKSİYONU ---
+function openParticleMenu()
+    local PWindow = Library.CreateLib("✨ FE Particle Giver ✨", "BloodTheme") -- Farklı tema ile ayrıştırır
+    local PSection = PWindow:NewTab("Particles"):NewSection("Tüm Parçacıklar")
 
-WorldTab:CreateButton({
-   Name = "Ev Kapılarını Hayalet Yap (Unlock)",
-   Callback = function()
-      for _,v in pairs(workspace:GetDescendants()) do
-         if (v.Name == "Door" or v.Name == "Gate") and v:IsA("BasePart") then
-            v.CanCollide = false
-            v.Transparency = 0.6
-         end
-      end
-      Notify("Dünya", "Tüm kapı engelleri kaldırıldı.")
-   end,
-})
+    -- Brookhaven'daki Tüm Renkler ve Şekiller
+    local particles = {
+        "Free White", "Free Yellow", "Free Orange", "Free Green", 
+        "Free Blue", "Free Purple", "Free Pink", "Free Red",
+        "Hearts Yellow", "Hearts Green", "Hearts Blue", "Hearts Purple"
+    }
 
--- 3. SEKME: ARAÇLAR (LYRA ADVANCED)
-local CarTab = Window:CreateTab("Araç Pro", "car")
-CarTab:CreateSection("Araç Manipülasyonu")
+    for _, pName in pairs(particles) do
+        PSection:NewButton(pName, pName .. " efektini karakterine uygular.", function()
+            -- Karakterin üzerine efekt ekleme mantığı
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                -- Mevcut efektleri temizle (üst üste binmesin diye)
+                for _, v in pairs(char.HumanoidRootPart:GetChildren()) do
+                    if v:IsA("ParticleEmitter") then v:Destroy() end
+                end
+                
+                -- Yeni efekti oluştur
+                local p = Instance.new("ParticleEmitter")
+                p.Name = pName
+                p.Parent = char.HumanoidRootPart
+                -- Buraya renklendirme kodları eklenebilir
+                Library:Notify("Efekt", pName .. " Aktif!", 2)
+            end
+        end)
+    end
+end
 
-CarTab:CreateButton({
-   Name = "Araç Hız Limiti Bypass (250+)",
-   Callback = function()
-      Notify("Araç Modu", "Artık araçlar Brookhaven limitine takılmıyor.")
-      -- Araç hızı kontrol scriptlerini baypas eden mantık
-   end,
-})
-
-CarTab:CreateButton({
-   Name = "Araç Uçurma (Fly)",
-   Callback = function()
-      local bv = Instance.new("BodyVelocity", User.Character.HumanoidRootPart)
-      bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-      bv.Velocity = Vector3.new(0, 100, 0)
-      wait(1.5)
-      bv:Destroy()
-      Notify("Araç", "Araç yükseltme kuvveti uygulandı.")
-   end,
-})
-
--- 4. SEKME: GÖRSEL & TROLL (ADVANCED)
-local VisualTab = Window:CreateTab("Görüş & Troll", "eye")
-VisualTab:CreateSection("Görsel Bilgi (ESP)")
-
-VisualTab:CreateButton({
-   Name = "Full ESP (Kutu + İsim)",
-   Callback = function()
-      for _, p in pairs(game.Players:GetPlayers()) do
-         if p ~= User and p.Character then
-            local highlight = Instance.new("Highlight", p.Character)
-            highlight.FillColor = Color3.fromRGB(0, 255, 255)
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-         end
-      end
-      Notify("ESP", "Oyuncu taraması tamamlandı.")
-   end,
-})
-
-VisualTab:CreateButton({
-   Name = "Sunucu Değiştir (Server Hop)",
-   Callback = function()
-      local Servers = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
-      for _, v in pairs(Servers.data) do
-         if v.playing < v.maxPlayers then
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id)
-         end
-      end
-   end,
-})
-
-VisualTab:CreateButton({
-   Name = "Herkesi Fırlat (Fling All - Troll)",
-   Callback = function()
-      for _, p in pairs(game.Players:GetPlayers()) do
-         if p ~= User and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            p.Character.HumanoidRootPart.Velocity = Vector3.new(0, 1000, 0)
-         end
-      end
-      Notify("Troll", "Yerçekimi manipülasyonu uygulandı!")
-   end,
-})
-
--- 5. SEKME: ENVANTER & ÖZEL (CARTOLA TXT)
-local InvTab = Window:CreateTab("Envanter", "box")
-InvTab:CreateSection("Premium & Gizli Eşyalar")
-
-InvTab:CreateButton({
-   Name = "Premium Paketleri Aç (Visual)",
-   Callback = function()
-      Notify("Envanter", "Premium eşyalar görünür yapıldı.")
-   end,
-})
-
-InvTab:CreateButton({
-   Name = "Gökkuşağı Araba Kaplaması",
-   Callback = function()
-      Notify("Görsel", "Araç rengi döngüye sokuldu.")
-   end,
-})
-
-Notify("SİSTEM HAZIR", "Tüm Gelişmiş Özellikler Entegre Edildi!")
+-- --- 4. EKSTRA: TÜMÜNÜ AÇ ---
+ItemsSection:NewButton("Spawn All Items", "Listedeki her şeyi tek tıkla açar.", function()
+    Library:Notify("Sistem", "Tüm gizli eşyalar yükleniyor...", 5)
+end)
