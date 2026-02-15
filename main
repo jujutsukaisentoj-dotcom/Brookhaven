@@ -1,122 +1,156 @@
 --[[
-    HEXAGON CLIENT - BROOKHAVEN FULL ACCESS
+    HEXAGON CLIENT - BROOKHAVEN FULL ACCESS (PRO EDITION)
     Özellikler: 
-    - RE Folder RemoteEvent Tetikleyici (FireServer)
-    - Dex Explorer Parçacık Listesi (Full)
+    - Gelişmiş RemoteEvent/Function Taraması (FireServer & InvokeServer)
+    - Brookhaven Gizli Eşya Tetikleyicileri (1Playe1rTrigge1rEven1t)
+    - Dex Explorer Parçacık Listesi (Sunucu Taraflı Tetikleme)
     - Mobil Uyumlu Sürüklenebilir Buton
-    - Money Gun Entegrasyonu
 ]]
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Hexagon Client | Brookhaven", "DarkTheme")
+local Window = Library.CreateLib("Hexagon Pro | Brookhaven", "DarkTheme")
 
--- --- 📱 MOBİL AÇ/KAPAT BUTONU (Sürüklenebilir) ---
-local ScreenGui = Instance.new("ScreenGui")
-local ToggleButton = Instance.new("TextButton")
-local UICorner = Instance.new("UICorner")
+-- --- 📱 MOBİL AÇ/KAPAT BUTONU ---
+local CoreGui = game:GetService("CoreGui")
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+local ToggleButton = Instance.new("TextButton", ScreenGui)
+local UICorner = Instance.new("UICorner", ToggleButton)
 
-ScreenGui.Parent = game:GetService("CoreGui")
-ToggleButton.Parent = ScreenGui
 ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-ToggleButton.Position = UDim2.new(0.05, 0, 0.4, 0)
+ToggleButton.Position = UDim2.new(0.02, 0, 0.4, 0)
 ToggleButton.Size = UDim2.new(0, 55, 0, 55)
 ToggleButton.Text = "HEX"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleButton.Font = Enum.Font.FredokaOne
 ToggleButton.TextSize = 18
 ToggleButton.Draggable = true
-
 UICorner.CornerRadius = UDim.new(1, 0)
-UICorner.Parent = ToggleButton
 
-ToggleButton.MouseButton1Click:Connect(function()
-    Library:ToggleUI()
-end)
+ToggleButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 
--- --- 📡 REMOTE EVENT (RE) SİSTEMİ ---
-local RE = game:GetService("ReplicatedStorage"):WaitForChild("RE")
+-- --- 📡 GELİŞMİŞ TETİKLEME FONKSİYONLARI ---
+local rep = game:GetService("ReplicatedStorage")
+local lp = game:GetService("Players").LocalPlayer
 
--- Eşya Tetikleyici (FireServer)
-local function TriggerItem(itemName)
-    -- Brookhaven genellikle ilk RemoteEvent'i kullanır
-    local remote = RE:FindFirstChildOfClass("RemoteEvent")
-    if remote then
-        remote:FireServer(itemName)
-        Library:Notify("Remote Tetiklendi", itemName .. " için FireServer gönderildi!", 2)
-    else
-        Library:Notify("Hata", "RE RemoteEvent bulunamadı!", 3)
-    end
-end
-
--- Parçacık Tetikleyici (Dex Listesi için)
-local function TriggerParticle(particleName, color)
-    local remote = RE:FindFirstChildOfClass("RemoteEvent")
-    if remote then
-        -- Brookhaven'ın parçacık tetikleme formatı genellikle (Kategori, Renk) şeklindedir
-        remote:FireServer("ParticleGiver", particleName, color)
-    end
-end
-
--- --- 1. TAB: LIMITED ITEMS & MONEY GUN ---
-local ItemsTab = Window:NewTab("Limited Items")
-local ItemsSection = ItemsTab:NewSection("Tetiklenebilir Eşyalar")
-
-local brookhavenItems = {
-    "MoneyGun", "Glider", "Chainsaw", "UraniumRod", 
-    "Couch", "WaterBalloon", "EggLauncher", "FireExtinguisher"
-}
-
-for _, item in pairs(brookhavenItems) do
-    ItemsSection:NewButton("🔥 " .. item, "RE üzerinden " .. item .. " tetikler.", function()
-        TriggerItem(item)
+local function tryNotify(title, text)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = 3
+        })
     end)
 end
 
--- --- 2. TAB: FE PARTICLE GIVER (DEX LIST) ---
-local ParticleTab = Window:NewTab("FE Particles")
+-- Eşya Tetikleyici (Hexagon Hub Mantığı)
+local function GetItem(itemName)
+    local re = rep:FindFirstChild("RE") or rep:FindFirstChild("Remotes") or rep
+    local trigger = re:FindFirstChild("1Playe1rTrigge1rEven1t") or rep:FindFirstChild("1Playe1rTrigge1rEven1t")
+    
+    -- 1. Yöntem: Trigger Event (En Sağlıklı Yol)
+    if trigger then
+        local args = {[1] = "AcceptedToolToServer", [2] = itemName, [3] = lp}
+        if trigger:IsA("RemoteEvent") then
+            trigger:FireServer(unpack(args))
+            tryNotify("Hexagon", itemName .. " Tetiklendi 🎯")
+            return
+        end
+    end
 
--- Renkler
-local colors = {"White", "Yellow", "Orange", "Green", "Blue", "Purple", "Pink", "Red", "Black"}
+    -- 2. Yöntem: Genel Arama
+    local candidates = {"GetItem", "Getİtem", "GetTool"}
+    for _, name in ipairs(candidates) do
+        local r = re:FindFirstChild(name)
+        if r then
+            if r:IsA("RemoteEvent") then
+                r:FireServer(itemName)
+                tryNotify("Hexagon", itemName .. " (RE) Gönderildi 🔥")
+                return
+            elseif r:IsA("RemoteFunction") then
+                r:InvokeServer(itemName)
+                tryNotify("Hexagon", itemName .. " (RF) Gönderildi ⚙️")
+                return
+            end
+        end
+    end
 
--- Dex Explorer'daki Tam Liste
-local dexCategories = {
-    "Hearts", "Sparks", "Bubble", "Music", 
-    "Smoke", "Star", "Fire", "Dots", "Twinkle"
+    -- 3. Yöntem: 1Too1l Invoke (Örn: Water Balloon)
+    local toolInvoke = re:FindFirstChild("1Too1l")
+    if toolInvoke and toolInvoke:IsA("RemoteFunction") then
+        pcall(function() toolInvoke:InvokeServer("PickingTools", itemName) end)
+    end
+end
+
+-- Parçacık Tetikleyici (FireServer)
+local function GiveParticle(cat, color)
+    local re = rep:FindFirstChild("RE")
+    local remote = re and re:FindFirstChildOfClass("RemoteEvent")
+    if remote then
+        -- Brookhaven Sunucu Taraflı Parçacık Tetikleme
+        remote:FireServer("ParticleGiver", cat, color)
+    end
+end
+
+-- --- 1. TAB: LIMITED ITEMS ---
+local ItemsTab = Window:NewTab("Limited Items")
+local ItemsSec = ItemsTab:NewSection("Gizli Eşyalar")
+
+local tools = {
+    {Title = "💸 Money Gun", Name = "MoneyGun"},
+    {Title = "🪂 Glider", Name = "Glider"},
+    {Title = "❄️ Snowball Cannon", Name = "SnowballCannon"},
+    {Title = "💣 Cannon", Name = "Cannon"},
+    {Title = "🏀 Golden Basketball", Name = "GoldenBasketball"},
+    {Title = "💦 Water Balloon", Name = "Water Balloon"},
+    {Title = "🥚 Egg Launcher", Name = "EggLauncher"},
+    {Title = "🪓 Scythe", Name = "Scythe"},
+    {Title = "🧪 Uranium Rod", Name = "UraniumRod"},
+    {Title = "🪚 Chainsaw", Name = "Chainsaw"},
+    {Title = "🧺 Candy Basket", Name = "CandyBasket"}
 }
 
-for _, category in pairs(dexCategories) do
-    local section = ParticleTab:NewSection(category .. " Efektleri")
-    for _, color in pairs(colors) do
-        section:NewButton(category .. " " .. color, "FireServer ile " .. color .. " " .. category .. " tetikler.", function()
-            TriggerParticle(category, color)
+for _, t in pairs(tools) do
+    ItemsSec:NewButton(t.Title, t.Name .. " eşyasını tetikler.", function()
+        GetItem(t.Name)
+    end)
+end
+
+ItemsSec:NewButton("🧠 Telekinesis V5", "Dış scripti yükler.", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/BRENOPOOF/fe-telekinessv5/refs/heads/main/Main.txt"))()
+end)
+
+-- --- 2. TAB: FE PARTICLES (FULL DEX LIST) ---
+local ParticleTab = Window:NewTab("FE Particles")
+local colors = {"White", "Yellow", "Orange", "Green", "Blue", "Purple", "Pink", "Red", "Black"}
+local dexCats = {"Hearts", "Sparks", "Bubble", "Music", "Smoke", "Star", "Fire", "Dots", "Twinkle"}
+
+for _, cat in pairs(dexCats) do
+    local sec = ParticleTab:NewSection(cat)
+    for _, col in pairs(colors) do
+        sec:NewButton(cat .. " " .. col, col .. " " .. cat .. " efektini tetikler.", function()
+            GiveParticle(cat, col)
             
-            -- Client-side görsel yedek (Eğer sunucu gecikirse)
-            local char = game.Players.LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                for _, v in pairs(char.HumanoidRootPart:GetChildren()) do
-                    if v:IsA("ParticleEmitter") then v:Destroy() end
-                end
-                local p = Instance.new("ParticleEmitter")
+            -- Client-Side Backup (Görsel garanti)
+            local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                for _, v in pairs(root:GetChildren()) do if v:IsA("ParticleEmitter") then v:Destroy() end end
+                local p = Instance.new("ParticleEmitter", root)
                 p.Name = "HexEffect"
-                p.Parent = char.HumanoidRootPart
-                p.Color = ColorSequence.new(Color3.fromHex(color == "Black" and "000000" or color))
+                p.Color = ColorSequence.new(Color3.fromHex(col == "Black" and "000000" or col))
                 p.Rate = 50
+                -- Texture ID'ler dexCats sırasına göre eklenebilir
             end
         end)
     end
 end
 
 -- --- 3. TAB: AYARLAR ---
-local Settings = Window:NewTab("Ayarlar")
-Settings:NewSection("Menü Kontrol")
-Settings:NewKeybind("Menüyü Kapat/Aç", "Klavye için (PC)", Enum.KeyCode.RightControl, function()
-    Library:ToggleUI()
-end)
-
-Settings:NewButton("🚫 Tüm Efektleri Durdur", "Tetiklemeyi keser ve temizler.", function()
-    local char = game.Players.LocalPlayer.Character
-    if char then
-        for _, v in pairs(char.HumanoidRootPart:GetChildren()) do
+local Settings = Window:NewTab("Settings")
+Settings:NewSection("Kontroller")
+Settings:NewKeybind("Menü Tuşu", "PC İçin", Enum.KeyCode.RightControl, function() Library:ToggleUI() end)
+Settings:NewButton("🚫 Temizle", "Efektleri Siler", function()
+    if lp.Character then
+        for _, v in pairs(lp.Character.HumanoidRootPart:GetChildren()) do
             if v:IsA("ParticleEmitter") then v:Destroy() end
         end
     end
