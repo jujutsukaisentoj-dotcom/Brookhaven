@@ -4,6 +4,7 @@
     - Gelişmiş RemoteEvent/Function Taraması (FireServer & InvokeServer)
     - Brookhaven Gizli Eşya Tetikleyicileri (1Playe1rTrigge1rEven1t)
     - Dex Explorer Parçacık Listesi (Sunucu Taraflı Tetikleme)
+    - AvatarEditor EmmiterList Erişimi ve Kontrolü
     - Mobil Uyumlu Sürüklenebilir Buton
 ]]
 
@@ -31,6 +32,7 @@ ToggleButton.MouseButton1Click:Connect(function() Library:ToggleUI() end)
 -- --- 📡 GELİŞMİŞ TETİKLEME FONKSİYONLARI ---
 local rep = game:GetService("ReplicatedStorage")
 local lp = game:GetService("Players").LocalPlayer
+local PlayerGui = lp:WaitForChild("PlayerGui")
 
 local function tryNotify(title, text)
     pcall(function()
@@ -42,12 +44,39 @@ local function tryNotify(title, text)
     end)
 end
 
+-- --- 🔍 EMMITERLIST ERİŞİM SİSTEMİ ---
+local function AccessEmmiterList()
+    -- Belirttiğin tam GUI yolu
+    local path = PlayerGui:FindFirstChild("NoResetGUIHandler")
+    if path then
+        local target = path:FindFirstChild("AvatarEditorHolder")
+        if target then target = target:FindFirstChild("AvatarEditorMenu") end
+        if target then target = target:FindFirstChild("Catalog") end
+        if target then target = target:FindFirstChild("Container") end
+        if target then target = target:FindFirstChild("EmmiterList") end
+        
+        if target then
+            -- EmmiterList'i aktif et ve tüm özelliklerine erişim sağla
+            target.Visible = true
+            for _, child in pairs(target:GetChildren()) do
+                if child:IsA("GuiObject") then
+                    child.Visible = true
+                    -- Burada ek özellikler (enabled vb.) varsa true yapılabilir
+                end
+            end
+            tryNotify("EmmiterList", "Erişim sağlandı ve aktif edildi! ✅")
+            return target
+        end
+    end
+    tryNotify("Hata", "EmmiterList yolu bulunamadı! ❌")
+    return nil
+end
+
 -- Eşya Tetikleyici (Hexagon Hub Mantığı)
 local function GetItem(itemName)
     local re = rep:FindFirstChild("RE") or rep:FindFirstChild("Remotes") or rep
     local trigger = re:FindFirstChild("1Playe1rTrigge1rEven1t") or rep:FindFirstChild("1Playe1rTrigge1rEven1t")
     
-    -- 1. Yöntem: Trigger Event (En Sağlıklı Yol)
     if trigger then
         local args = {[1] = "AcceptedToolToServer", [2] = itemName, [3] = lp}
         if trigger:IsA("RemoteEvent") then
@@ -57,7 +86,6 @@ local function GetItem(itemName)
         end
     end
 
-    -- 2. Yöntem: Genel Arama
     local candidates = {"GetItem", "Getİtem", "GetTool"}
     for _, name in ipairs(candidates) do
         local r = re:FindFirstChild(name)
@@ -74,7 +102,6 @@ local function GetItem(itemName)
         end
     end
 
-    -- 3. Yöntem: 1Too1l Invoke (Örn: Water Balloon)
     local toolInvoke = re:FindFirstChild("1Too1l")
     if toolInvoke and toolInvoke:IsA("RemoteFunction") then
         pcall(function() toolInvoke:InvokeServer("PickingTools", itemName) end)
@@ -86,7 +113,6 @@ local function GiveParticle(cat, color)
     local re = rep:FindFirstChild("RE")
     local remote = re and re:FindFirstChildOfClass("RemoteEvent")
     if remote then
-        -- Brookhaven Sunucu Taraflı Parçacık Tetikleme
         remote:FireServer("ParticleGiver", cat, color)
     end
 end
@@ -124,13 +150,17 @@ local ParticleTab = Window:NewTab("FE Particles")
 local colors = {"White", "Yellow", "Orange", "Green", "Blue", "Purple", "Pink", "Red", "Black"}
 local dexCats = {"Hearts", "Sparks", "Bubble", "Music", "Smoke", "Star", "Fire", "Dots", "Twinkle"}
 
+local EmmiterSec = ParticleTab:NewSection("✨ EmmiterList Kontrolü")
+EmmiterSec:NewButton("🔓 Unlock EmmiterList", "Oyunun yerel emmiter listesini açar.", function()
+    AccessEmmiterList()
+end)
+
 for _, cat in pairs(dexCats) do
     local sec = ParticleTab:NewSection(cat)
     for _, col in pairs(colors) do
         sec:NewButton(cat .. " " .. col, col .. " " .. cat .. " efektini tetikler.", function()
             GiveParticle(cat, col)
             
-            -- Client-Side Backup (Görsel garanti)
             local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
             if root then
                 for _, v in pairs(root:GetChildren()) do if v:IsA("ParticleEmitter") then v:Destroy() end end
@@ -138,7 +168,6 @@ for _, cat in pairs(dexCats) do
                 p.Name = "HexEffect"
                 p.Color = ColorSequence.new(Color3.fromHex(col == "Black" and "000000" or col))
                 p.Rate = 50
-                -- Texture ID'ler dexCats sırasına göre eklenebilir
             end
         end)
     end
