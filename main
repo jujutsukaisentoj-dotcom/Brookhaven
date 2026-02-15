@@ -1,21 +1,24 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({Name = "Brookhaven Özel", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDZHUB/RedzLibV2/main/source.lua"))()
 
-local Tab = Window:MakeTab({
-	Name = "Oyuncu",
-	Icon = "rbxassetid://4483345906",
-	PremiumOnly = false
+local Window = RedzLib:MakeWindow({
+  Title = "Brookhaven: Özel Menü",
+  SubTitle = "Hazırlayan: Gemini",
+  SaveFolder = "BrookhavenConfig.json"
 })
 
-Tab:AddSlider({
-	Name = "Hız Ayarı",
-	Min = 16,
-	Max = 200,
-	Default = 16,
-	Color = Color3.fromRGB(255,255,255),
-	Increment = 1,
-	ValueName = "Hız",
-	Callback = function(Value)
-		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-	end    
+-- Ana Sekme (Tab)
+local MainTab = Window:MakeTab("Genel", "home")
+
+-- Bildirim Gönderelim (Çalıştığını anlamak için)
+RedzLib:SetNotify("Sistem Aktif!", "Brookhaven scripti başarıyla yüklendi.", 5)
+
+-- Hız Ayarı (Slider)
+MainTab:AddSlider({
+  Name = "Yürüme Hızı",
+  Min = 16,
+  Max = 300,
+  Default = 16,
+  Callback = function(Value)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+  end
 })
